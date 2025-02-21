@@ -6,7 +6,7 @@
   }
 </script>
 
-<!-- Clickable Logo Card at Top Left with White Glow -->
+Upper left logo card removed (code kept for future use)
 <a href="/" class="fixed top-4 left-4">
   <div class="bg-white rounded-lg shadow-[0_0_10px_rgba(255,255,255,0.8)] p-3 flex items-center space-x-2">
     <img src="{logo}" alt="Aerogen Logo" class="h-12 w-auto mr-0" />
@@ -14,11 +14,12 @@
   </div>
 </a>
 
+
 <!-- Hamburger Button at Top Right -->
 <div class="fixed top-4 right-4">
   <button 
     on:click={toggleMenu}
-    class="p-2 focus:outline-none shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+    class="p-2 focus:outline-none"
     aria-label={isMenuOpen ? 'Close Menu' : 'Open Menu'}>
     {#if isMenuOpen}
       <!-- White X Icon -->

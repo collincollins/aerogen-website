@@ -15,40 +15,71 @@
 
     // Set up scene, camera, and renderer
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 50);
+    const camera = new THREE.PerspectiveCamera(90, width / height, 0.1, 2000);
+    camera.position.set(0, 0, 40);
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setClearColor(0x000000, 0); // Ensure transparent background
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
 
     // Create a group to hold the cloud
     const cloud = new THREE.Group();
 
-    // White material for cloud spheres
-    const material = new THREE.MeshStandardMaterial({
-      color: 'white',
+    // White material for cloud
+    const material = new THREE.MeshPhysicalMaterial({
+      color: 0xFFFFFF,
       roughness: 0.9,
-      metalness: 0.01,
+      metalness: 0.0,
+      clearcoat: 0.6,
+      clearcoatRoughness: 1,
+      emissive: 0xFFFFFF,
+      emissiveIntensity: 0.5,
     });
 
     // Create several spheres arranged to form a cloud
-    const sphereGeometry = new THREE.SphereGeometry(5, 32, 32);
-    for (let i = 0; i < 50; i++) {
-      const sphere = new THREE.Mesh(sphereGeometry, material);
-      sphere.position.x = (Math.random() - 0.5) * 15;
-      sphere.position.y = (Math.random() - 0.3) * 15;
-      sphere.position.z = (Math.random() - 0.5) * 15;
-      cloud.add(sphere);
+    const sphereGeometry = new THREE.SphereGeometry(4, 32, 32);
+    // Create a more uniform cloud shape
+    const positions = [];
+    const radius = 10;
+    const layers = 3;
+    
+    // Generate positions in a more organized pattern
+    for (let layer = 0; layer < layers; layer++) {
+      const layerRadius = radius - (layer * 2);
+      const numSpheresInLayer = Math.floor(12 * (1 - layer * 0.2));
+      
+      for (let i = 0; i < numSpheresInLayer; i++) {
+        const angle = (i / numSpheresInLayer) * Math.PI * 2;
+        positions.push({
+          x: Math.cos(angle) * layerRadius,
+          y: layer * 3 - 4,
+          z: Math.sin(angle) * layerRadius
+        });
+      }
     }
+    
+    // Add some randomness to the positions
+    positions.forEach(pos => {
+      const sphere = new THREE.Mesh(sphereGeometry, material);
+      sphere.position.x = pos.x + (Math.random() - 0.5) * 2;
+      sphere.position.y = pos.y + (Math.random() - 0.5) * 2;
+      sphere.position.z = pos.z + (Math.random() - 0.5) * 2;
+      cloud.add(sphere);
+    });
+
     scene.add(cloud);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight("white", 1);
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 2.0);
     scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight("white", 1);
-    directionalLight.position.set(10, 20, 10);
+    
+    // Main directional light from above
+    const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0); 
+    directionalLight.position.set(0, 100, 0); 
+    directionalLight.target.position.set(20, 0, 0); 
     scene.add(directionalLight);
+    scene.add(directionalLight.target);
 
     // Animation loop to rotate the cloud slowly for 3D effect
     function animate() {
