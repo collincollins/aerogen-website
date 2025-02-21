@@ -4,9 +4,14 @@
   import Footer from "$lib/Footer.svelte";
 </script>
 
-<Navbar />
+<!-- Fixed gradient background -->
+<div class="fixed inset-0 bg-gradient-to-br from-[rgb(29,73,167)] to-[rgb(95,179,249)]" />
 
-<main class="min-h-screen bg-gradient-to-br from-[rgb(29,73,167)] to-[rgb(95,179,249)]">
-  <slot />
+<!-- Scrollable content container -->
+<div class="relative min-h-screen">
+  <Navbar />
+  <main class="relative">
+    <slot />
+  </main>
   <Footer />
-</main> 
+</div> 

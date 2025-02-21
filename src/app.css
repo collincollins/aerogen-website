@@ -5,10 +5,11 @@
 @layer base {
   html {
     font-family: aileron, sans-serif;
+    scroll-behavior: smooth;
   }
   
   body {
-    @apply min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900;
+    @apply text-gray-900;
   }
 }
 
