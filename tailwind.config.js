@@ -13,13 +13,7 @@ export default {
       backgroundImage: {
         'primary-gradient': 'linear-gradient(to right, rgb(29, 73, 167), rgb(95, 179, 249))',
       },
-      backdropBlur: {
-        'glass': '16px',
-      },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
-  ],
+  plugins: [],
 } 
