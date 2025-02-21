@@ -8,6 +8,36 @@
   let camera: PerspectiveCamera; 
   let renderer: WebGLRenderer;
   let cloud: Group;
+  let spinProgress = 0;
+  const normalRotationSpeed = 0.002;
+  const fastRotationSpeed = 0.08;
+  const spinDuration = 300; // ms
+  let spinStartTime: number | null = null;
+
+  // Easing function for smooth acceleration and deceleration
+  const easeInOutQuad = (t: number): number => {
+    return t < 0.5 ? 1.5 * t * t : 1 - Math.pow(-1.5 * t + 2, 2) / 2;
+  };
+
+  // Function to be called from parent
+  export const spin = () => {
+    return new Promise<void>((resolve) => {
+      spinStartTime = performance.now();
+      const animate = () => {
+        const elapsed = performance.now() - spinStartTime!;
+        spinProgress = Math.min(1, elapsed / spinDuration);
+        
+        if (spinProgress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          spinProgress = 0;
+          spinStartTime = null;
+          resolve();
+        }
+      };
+      animate();
+    });
+  };
 
   onMount(() => {
     const width = container.clientWidth;
@@ -49,6 +79,8 @@
       clearcoatRoughness: 1,
       emissive: 0xFFFFFF,
       emissiveIntensity: 0.5,
+      transparent: true,
+      opacity: 1,
     });
 
     // Create several spheres arranged to form a cloud
@@ -95,10 +127,16 @@
     scene.add(directionalLight);
     scene.add(directionalLight.target);
 
-    // Animation loop to rotate the cloud slowly for 3D effect
+    // Modify animation loop for gentle perturbation
     function animate() {
       requestAnimationFrame(animate);
-      cloud.rotation.y += 0.002;
+      
+      // Calculate current rotation speed using easing
+      const currentSpeed = spinStartTime 
+        ? normalRotationSpeed + (fastRotationSpeed - normalRotationSpeed) * easeInOutQuad(spinProgress)
+        : normalRotationSpeed;
+        
+      cloud.rotation.y += currentSpeed;
       renderer.render(scene, camera);
     }
     animate();

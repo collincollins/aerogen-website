@@ -1,31 +1,45 @@
 <script lang="ts">
   import Cloud3D from "$lib/Cloud3D.svelte";
-  import logo from "../images/logo.png"; // Ensure this file exists
-  let isMenuOpen = false;
+  import logo from "../images/logo.png";
+  import { goto } from "$app/navigation";
   
-  const toggleMenu = () => {
-    isMenuOpen = !isMenuOpen;
-  }
+  let cloudComponent: Cloud3D;
+  let isClicking = false;
+  
+  const handleLogoClick = async () => {
+    isClicking = true;
+    await cloudComponent.spin();
+    isClicking = false;
+    goto('/');
+  };
 </script>
 
 <!-- Navbar with transparent background -->
 <header class="fixed top-0 left-0 w-full z-50">
   <!-- Cloud container in upper left -->
   <div class="absolute top-[-8rem] left-[-6rem] w-[23rem] h-[23rem]">
-    <Cloud3D />
-    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+    <Cloud3D bind:this={cloudComponent} />
+    <div class="absolute inset-0 flex flex-col items-center justify-center">
       <!-- Shadow layer -->
       <img 
         src={logo} 
         alt="" 
-        class="absolute h-14 w-auto mt-1 opacity-90 blur-sm transform translate-y-[6px]" 
+        class="absolute h-14 w-auto mt-2.5 opacity-90 blur-sm transform translate-y-[6px]
+              transition-transform duration-300"
+        class:scale-90={isClicking}
       />
       <!-- Main logo layer -->
-      <img 
-        src={logo} 
-        alt="Aerogen Logo" 
-        class="h-14 w-auto mt-1 relative" 
-      />
+      <button 
+        class="relative bg-transparent border-0 p-0"
+        on:click={handleLogoClick}
+      >
+        <img 
+          src={logo} 
+          alt="Aerogen Logo" 
+          class="h-14 w-auto mt-2.5 cursor-pointer transition-transform duration-250"
+          class:scale-90={isClicking}
+        />
+      </button>
     </div>
   </div>
 
