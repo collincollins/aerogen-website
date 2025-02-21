@@ -8,7 +8,7 @@
 <div class="fixed inset-0 bg-gradient-to-br from-[rgb(29,73,167)] to-[rgb(95,179,249)]" />
 
 <!-- Scrollable content container -->
-<div class="relative min-h-screen">
+<div class="absolute inset-0 overflow-y-auto">
   <Navbar />
   <main class="relative">
     <slot />

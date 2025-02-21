@@ -18,9 +18,23 @@
     const camera = new THREE.PerspectiveCamera(90, width / height, 0.1, 2000);
     camera.position.set(0, 0, 40);
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setClearColor(0x000000, 0); // Ensure transparent background
+    // Enhanced renderer settings for better resolution
+    const renderer = new THREE.WebGLRenderer({ 
+      alpha: true, 
+      antialias: true,
+      precision: 'highp',
+      // powerPreference: 'high-performance'
+    });
+    
+    // Match device pixel ratio for sharper rendering
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000, 0);
     renderer.setSize(width, height);
+    
+    // Enable shadow mapping for better quality
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
     container.appendChild(renderer.domElement);
 
     // Create a group to hold the cloud
@@ -31,14 +45,14 @@
       color: 0xFFFFFF,
       roughness: 0.9,
       metalness: 0.0,
-      clearcoat: 0.6,
+      clearcoat: 0.8,
       clearcoatRoughness: 1,
       emissive: 0xFFFFFF,
       emissiveIntensity: 0.5,
     });
 
     // Create several spheres arranged to form a cloud
-    const sphereGeometry = new THREE.SphereGeometry(4, 32, 32);
+    const sphereGeometry = new THREE.SphereGeometry(4, 64, 64);
     // Create a more uniform cloud shape
     const positions = [];
     const radius = 10;
@@ -89,12 +103,12 @@
     }
     animate();
 
-    // Handle resizing
-    window.addEventListener("resize", onWindowResize);
+    // Update resize handler to account for pixel ratio
     function onWindowResize() {
       const width = container.clientWidth;
       const height = container.clientHeight;
       renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     }

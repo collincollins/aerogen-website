@@ -11,10 +11,21 @@
 <!-- Navbar with transparent background -->
 <header class="fixed top-0 left-0 w-full z-50">
   <!-- Cloud container in upper left -->
-  <div class="absolute top-[-10rem] left-[-8rem] w-[30rem] h-[30rem]">
+  <div class="absolute top-[-8rem] left-[-6rem] w-[23rem] h-[23rem]">
     <Cloud3D />
     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-      <img src={logo} alt="Aerogen Logo" class="h-16 w-auto mt-4" />
+      <!-- Shadow layer -->
+      <img 
+        src={logo} 
+        alt="" 
+        class="absolute h-14 w-auto mt-1 opacity-90 blur-sm transform translate-y-[6px]" 
+      />
+      <!-- Main logo layer -->
+      <img 
+        src={logo} 
+        alt="Aerogen Logo" 
+        class="h-14 w-auto mt-1 relative" 
+      />
     </div>
   </div>
 

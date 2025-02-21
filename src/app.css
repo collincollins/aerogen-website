@@ -6,10 +6,17 @@
   html {
     font-family: aileron, sans-serif;
     scroll-behavior: smooth;
+    /* Prevent overscroll on modern browsers */
+    overscroll-behavior: none;
   }
   
   body {
     @apply text-gray-900;
+    /* Prevent any bounce/overscroll effect */
+    overflow-x: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
   }
 }
 
