@@ -36,3 +36,27 @@ aileron, sans-serif
 
 # Layout:
 mobile first, responsive design
+
+# WEBSITE DESIGN DETAILS
+
+Navigation:
+- Fixed navbar with cloud+logo and section buttons
+- Cloud+logo object spins and returns to main section when clicked
+- About/Work buttons trigger horizontal content slides
+
+Content Flow:
+- Main landing page slides left when sections are opened
+- New content slides in from the right
+- Smooth transitions with 300ms duration
+- Content sections maintain full viewport width
+
+Visual Style:
+- Sky-inspired gradient background (fixed)
+- Content appears to float over background
+- Minimal glassmorphic UI elements
+- Aileron font for modern, light typography
+
+Interaction:
+- Content scrolls independently within sections
+- Navigation state resets on page refresh
+- Responsive design adapts to screen sizes

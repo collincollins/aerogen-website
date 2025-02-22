@@ -2,6 +2,8 @@
   import "../app.css";
   import Navbar from "$lib/Navbar.svelte";
   import Footer from "$lib/Footer.svelte";
+  import ContentSlider from "$lib/ContentSlider.svelte";
+  import { currentSection } from "$lib/stores/navigation";
 </script>
 
 <!-- Fixed gradient background -->
@@ -11,7 +13,19 @@
 <div class="absolute inset-0 overflow-y-auto">
   <Navbar />
   <main class="relative">
-    <slot />
+    <ContentSlider>
+      <div slot="main">
+        <slot />
+      </div>
+      
+      <div slot="about" class="min-h-screen flex items-center justify-center">
+        <h2 class="text-3xl font-light text-white font-aileron">About Us</h2>
+      </div>
+      
+      <div slot="work" class="min-h-screen flex items-center justify-center">
+        <h2 class="text-3xl font-light text-white font-aileron">Our Work</h2>
+      </div>
+    </ContentSlider>
   </main>
   <Footer />
 </div> 

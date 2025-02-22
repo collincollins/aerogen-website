@@ -11,47 +11,9 @@ Modern, responsive website for Aerogen built with SvelteKit and TailwindCSS.
   - Primary: rgb(29, 73, 167)
   - Accent: rgb(95, 179, 249)
 
-## Quick Start
+## Navigation System
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/aerogen-website.git
-cd aerogen-website
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start development server:
-```bash
-npm run dev
-```
-
-## Tech Stack
-
-- SvelteKit - Web framework
-- TypeScript - Type safety
-- TailwindCSS - Styling
-- Vite - Build tool
-
-## Features
-
-- Responsive design
-- Modern UI components
-- Accessibility focused
-- Performance optimized
-
-## Building for Production
-
-```bash
-npm run build
-```
-
-Preview the production build:
-```bash
-npm run preview
-```
-
-
+- Smooth sliding content transitions
+- Section-based navigation (Main/About/Work)
+- Interactive cloud logo that returns to main view
+- Minimal navigation buttons
