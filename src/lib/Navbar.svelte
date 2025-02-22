@@ -17,14 +17,14 @@
 <!-- Navbar with transparent background -->
 <header class="fixed top-0 left-0 w-full z-50">
   <!-- Cloud container in upper left -->
-  <div class="absolute top-[-8rem] left-[-6rem] w-[23rem] h-[23rem]">
+  <div class="absolute top-[-5rem] left-[-3.5rem] w-[14rem] h-[14rem]">
     <Cloud3D bind:this={cloudComponent} />
     <div class="absolute inset-0 flex flex-col items-center justify-center">
       <!-- Shadow layer -->
       <img 
         src={logo} 
         alt="" 
-        class="absolute h-14 w-auto mt-2.5 opacity-90 blur-sm transform translate-y-[6px]
+        class="absolute h-7 w-auto mt-1 opacity-90 blur-sm transform translate-y-[6px]
               transition-transform duration-300"
         class:scale-90={isClicking}
       />
@@ -36,7 +36,7 @@
         <img 
           src={logo} 
           alt="Aerogen Logo" 
-          class="h-14 w-auto mt-2.5 cursor-pointer transition-transform duration-250"
+          class="h-9 w-auto mt-1 cursor-pointer transition-transform duration-250"
           class:scale-90={isClicking}
         />
       </button>
