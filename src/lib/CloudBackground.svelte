@@ -91,7 +91,7 @@
     directionalLight.target.position.set(20, 0, 0);
     scene.add(directionalLight);
     scene.add(directionalLight.target);
-
+ 
     // More varied cloud positions with better vertical distribution
     const cloudPositions = [
       // // Top row, far
