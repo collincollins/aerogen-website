@@ -29,7 +29,7 @@
       emissive: 0xFFFFFF,
       emissiveIntensity: 0.5,
       transparent: true,
-      opacity: 1,
+      opacity: 1.0,
     });
 
     // Use exact same cloud formation logic as navbar
@@ -67,7 +67,10 @@
 
   const initScene = () => {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.z = 100;
+    camera.position.y = 0; // Keep camera level
+    camera.lookAt(0, 0, 0);
     renderer = new THREE.WebGLRenderer({ 
       alpha: true, 
       antialias: true,
@@ -92,25 +95,24 @@
     scene.add(directionalLight);
     scene.add(directionalLight.target);
  
-    // More varied cloud positions with better vertical distribution
+    // Adjust cloud positions to be more level with camera
     const cloudPositions = [
-      // // Top row, far
-      // { x: -250, y: 180, z: -200, scale: 1.0 },
-      // { x: 50, y: 150, z: -180, scale: 1.2 },
-      // { x: 280, y: 200, z: -160, scale: 1.4 },
       
       // // Mid-distance clouds
       // { x: -300, y: -100, z: -200, scale: 3.5 },
       // { x: 50, y: 70, z: -180, scale: 3 },
-      // { x: 200, y: -50, z: -160, scale: 2.8 },
+      { x: 230, y: -120, z: -160, scale: 2.8 },
+      { x: -70, y: -130, z: -200, scale: 1 },
       
       // // Closer clouds
       // { x: -80, y: 40, z: -100, scale: 2 },
       // { x: 120, y: -20, z: -80, scale: 1.8 },
+      { x: 220, y: 80, z: -100, scale: 1 },
       
       // Nearest clouds (smaller, fast moving)
-      { x: -40, y: 30, z: -50, scale: 1 },
-      { x: 60, y: -25, z: -40, scale: 1 }
+      { x: -40, y: 50, z: -50, scale: 0.6 },
+      { x: 45, y: -25, z: -40, scale: 1 },
+      { x: 140, y: 50, z: -40, scale: 1 },
     ];
 
     cloudPositions.forEach(pos => {
@@ -118,14 +120,14 @@
       cloud.position.set(pos.x, pos.y, pos.z);
       cloud.scale.setScalar(pos.scale);
       
-      // More dramatic parallax effect based on z-distance
-      const normalizedDist = Math.abs(pos.z) / 400; // Now using full 400 unit range
-      cloud.userData.parallaxSpeed = Math.pow(1 - normalizedDist, 2); // Quadratic falloff
+      // Make sure cloud initially faces camera
+      cloud.lookAt(camera.position);
+      
+      const normalizedDist = Math.abs(pos.z) / 900;
+      cloud.userData.parallaxSpeed = Math.pow(1 - normalizedDist, 2);
       scene.add(cloud);
       clouds.push(cloud);
     });
-
-    camera.position.z = 50; // Moved camera back for better perspective
   };
 
   const easeInOutCubic = (t: number): number => {
@@ -137,14 +139,24 @@
     
     const baseOffset = sections[$currentSection].position;
     
+    // Get camera quaternion once per frame
+    const cameraQuaternion = camera.quaternion.clone();
+    
     clouds.forEach(cloud => {
-      // Apply individual rotation
+      // Apply individual rotation around Y axis first
       cloud.rotation.y += cloud.userData.rotationSpeed;
+      
+      // Billboard behavior - make cloud face camera
+      cloud.quaternion.copy(cameraQuaternion);
+      
+      // After billboard, apply the accumulated Y rotation
+      cloud.rotateY(cloud.userData.currentRotation || 0);
+      cloud.userData.currentRotation = (cloud.userData.currentRotation || 0) + cloud.userData.rotationSpeed;
       
       // Calculate eased parallax movement
       const targetX = cloud.userData.originalX - (baseOffset * cloud.userData.parallaxSpeed);
       const currentX = cloud.position.x;
-      const easedX = currentX + (targetX - currentX) * 0.1; // Smooth transition
+      const easedX = currentX + (targetX - currentX) * 0.1;
       cloud.position.x = easedX;
     });
 
