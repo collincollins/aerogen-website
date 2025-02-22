@@ -11,16 +11,19 @@
   let spinProgress = 0;
   const normalRotationSpeed = 0.002;
   const fastRotationSpeed = 0.08;
-  const spinDuration = 300; // ms
+  const spinDuration = 300; // Reduced from 300ms to 150ms for quicker response
   let spinStartTime: number | null = null;
 
-  // Easing function for smooth acceleration and deceleration
-  const easeInOutQuad = (t: number): number => {
-    return t < 0.5 ? 1.5 * t * t : 1 - Math.pow(-1.5 * t + 2, 2) / 2;
+  // Enhanced easing function optimized for quick response while maintaining smoothness
+  const easeInOutCubic = (t: number): number => {
+    // Adjusted curve to be more aggressive in the middle
+    return t < 0.5
+      ? 8 * t * t * t  // Increased from 4 to 8 for faster initial acceleration
+      : 1 - Math.pow(-2 * t + 2, 3) / 2;
   };
 
   // Function to be called from parent
-  export const spin = () => {
+  export const spin = (): Promise<void> => {
     return new Promise<void>((resolve) => {
       spinStartTime = performance.now();
       const animate = () => {
@@ -133,7 +136,7 @@
       
       // Calculate current rotation speed using easing
       const currentSpeed = spinStartTime 
-        ? normalRotationSpeed + (fastRotationSpeed - normalRotationSpeed) * easeInOutQuad(spinProgress)
+        ? normalRotationSpeed + (fastRotationSpeed - normalRotationSpeed) * easeInOutCubic(spinProgress)
         : normalRotationSpeed;
         
       cloud.rotation.y += currentSpeed;
