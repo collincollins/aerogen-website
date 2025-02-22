@@ -20,7 +20,7 @@
   ];
 </script>
 
-<footer class="py-4 mt-8">
+<footer class="py-4 mt-0">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
     <div class="flex space-x-4 mb-2">
       {#each socialLinks as link}

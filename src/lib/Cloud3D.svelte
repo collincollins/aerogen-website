@@ -47,16 +47,15 @@
     const height = container.clientHeight;
 
     // Set up scene, camera, and renderer
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(90, width / height, 0.1, 2000);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(90, width / height, 0.1, 2000);
     camera.position.set(0, 0, 24);
 
     // Enhanced renderer settings for better resolution
-    const renderer = new THREE.WebGLRenderer({ 
+    renderer = new THREE.WebGLRenderer({ 
       alpha: true, 
       antialias: true,
       precision: 'highp',
-      // powerPreference: 'high-performance'
     });
     
     // Match device pixel ratio for sharper rendering
@@ -71,7 +70,7 @@
     container.appendChild(renderer.domElement);
 
     // Create a group to hold the cloud
-    const cloud = new THREE.Group();
+    cloud = new THREE.Group();
 
     // White material for cloud
     const material = new THREE.MeshPhysicalMaterial({
@@ -153,6 +152,9 @@
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     }
+
+    // Add this line to attach the resize listener
+    window.addEventListener("resize", onWindowResize);
 
     return () => {
       window.removeEventListener("resize", onWindowResize);
