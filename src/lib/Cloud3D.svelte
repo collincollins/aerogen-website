@@ -49,7 +49,7 @@
     // Set up scene, camera, and renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(90, width / height, 0.1, 2000);
-    camera.position.set(0, 0, 40);
+    camera.position.set(0, 0, 24);
 
     // Enhanced renderer settings for better resolution
     const renderer = new THREE.WebGLRenderer({ 
