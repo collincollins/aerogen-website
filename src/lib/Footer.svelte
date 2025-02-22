@@ -10,7 +10,7 @@
     },
     {
       name: 'LinkedIn',
-      url: 'https://linkedin.com',
+      url: 'https://www.linkedin.com/company/aerogen-inc/',
       svg: `<svg class="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7c0-1-1-2-2-2s-2 1-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
               <rect x="2" y="9" width="4" height="12"/>

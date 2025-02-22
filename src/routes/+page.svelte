@@ -13,11 +13,3 @@
     </h2>
   </div>
 </div>
-
-<!-- Add more sections to demonstrate scroll -->
-<div class="min-h-screen flex items-center justify-center">
-  <div class="glass-panel px-16 py-12">
-    <h2 class="text-xl font-light text-primary font-aileron">Section 2</h2>
-    <p class="text-sm text-primary/80 mt-4">Scroll for more content...</p>
-  </div>
-</div>
