@@ -1,3 +1,1 @@
-declare module 'three' {
-    export * from '@types/three';
-} 
+// This entire file can be removed since you're using @types/three from npm 

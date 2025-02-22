@@ -54,6 +54,4 @@ Preview the production build:
 npm run preview
 ```
 
-## License
-
 
