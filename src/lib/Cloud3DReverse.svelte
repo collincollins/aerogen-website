@@ -9,16 +9,16 @@
   let renderer: WebGLRenderer;
   let cloud: Group;
   let spinProgress = 0;
-  const normalRotationSpeed = 0.002;
-  const fastRotationSpeed = 0.09;
-  const spinDuration = 200;
+  const normalRotationSpeed = -0.002; // Negative for opposite direction
+  const fastRotationSpeed = -0.09; // Faster and negative for opposite direction
+  const spinDuration = 200; // Reduced for quicker response
   let spinStartTime: number | null = null;
 
-  // Enhanced easing function optimized for quick response while maintaining smoothness
+  // Enhanced easing function optimized for quick response
   const easeInOutCubic = (t: number): number => {
     // Adjusted curve to be more aggressive in the middle
     return t < 0.5
-      ? 10 * t * t * t  // Increased from 8 to 10 for faster initial acceleration
+      ? 10 * t * t * t  // Increased for faster initial acceleration
       : 1 - Math.pow(-2 * t + 2, 3) / 2;
   };
 

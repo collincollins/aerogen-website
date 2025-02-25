@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentSection } from './stores/navigation';
+  import { currentSection, activeNavSections, type Section } from './stores/navigation';
   import { slide } from 'svelte/transition';
   import { cubicInOut } from 'svelte/easing';
 
@@ -12,6 +12,7 @@
       component: null, // We'll create these components next
       position: 100
     },
+    // Keep work section for future use
     work: {
       component: null,
       position: 200
@@ -19,6 +20,16 @@
   };
 
   $: transform = `translateX(-${sections[$currentSection].position}%)`;
+  
+  // Helper function to check if a section is active
+  function isSectionActive(section: Section): boolean {
+    return activeNavSections.includes(section);
+  }
+  
+  // Prevent navigation to inactive sections
+  $: if (!isSectionActive($currentSection)) {
+    currentSection.set('main');
+  }
 </script>
 
 <div class="relative w-full h-full overflow-hidden">
@@ -36,7 +47,7 @@
       <slot name="about" />
     </div>
 
-    <!-- Work content -->
+    <!-- Work content (preserved but hidden from navigation) -->
     <div class="min-w-full px-4 sm:px-6 md:px-8">
       <slot name="work" />
     </div>

@@ -35,6 +35,7 @@
         </GlassCard>
       </div>
       
+      <!-- Work section (inactive but preserved for future use) -->
       <div slot="work" class="min-h-screen flex items-center justify-center py-24">
         <GlassCard>
           <h2 class="text-3xl font-light text-primary font-aileron mb-6">Our Work</h2>
