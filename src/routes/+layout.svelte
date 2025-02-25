@@ -5,7 +5,15 @@
   import ContentSlider from "$lib/ContentSlider.svelte";
   import CloudBackground from "$lib/CloudBackground.svelte";
   import GlassCard from "$lib/GlassCard.svelte";
+  import DevTools from "$lib/DevTools.svelte";
   import { currentSection } from "$lib/stores/navigation";
+  import { showContentToggle } from "$lib/stores/devTools";
+  
+  // Track content visibility
+  let showContent = true;
+  showContentToggle.subscribe(value => {
+    showContent = value;
+  });
 </script>
 
 <!-- Fixed gradient background -->
@@ -15,7 +23,7 @@
 <CloudBackground />
 
 <!-- Scrollable content container -->
-<div class="absolute inset-0 overflow-y-auto">
+<div class="absolute inset-0 overflow-y-auto transition-opacity duration-300" class:opacity-0={!showContent} class:pointer-events-none={!showContent}>
   <Navbar />
   <main class="relative">
     <ContentSlider>
@@ -48,4 +56,7 @@
     </ContentSlider>
   </main>
   <Footer />
-</div> 
+</div>
+
+<!-- Developer tools -->
+<DevTools /> 
