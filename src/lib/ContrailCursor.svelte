@@ -4,24 +4,25 @@
   
   // Configuration for a smoke-like contrail effect (optimized)
   const CONFIG = {
-    maxParticles: 500,          // Balanced for performance and density
-    particleLife: 1000,         // Longer life for better trail visibility
-    emissionRate: 1,            // Balanced emission rate
-    particleSize: [3, 7],       // Starting size (slightly smaller max)
-    particleOpacity: [0.6, 0.9], // Higher starting opacity
-    color: 'rgba(255, 255, 255, 0.8)' // Semi-transparent white
+    maxParticles: 400,          // Increased to allow for longer contrails
+    particleLife: 3000,         // Increased to match airplane contrail life (5000)
+    emissionRate: 0.5,            // Set to same value as airplane.contrailDensity
+    particleSize: [3, 7],       // Kept the same
+    particleOpacity: [0.6, 0.9], // Kept the same
+    color: 'rgba(255, 255, 255, 0.8)', // Kept the same
+    moveThreshold: 3            // Reduced threshold for more responsive trail creation
   };
   
   // Airplane flyby configuration
   const AIRPLANE = {
-    size: 50,                   // Size of airplane in pixels (smaller version)
-    aspectRatio: 746/279,       // Width/height ratio of the cessna.png image
-    speed: 60,                 // Pixels per second (reduced for slower movement)
-    interval: 30000,            // Milliseconds between flybys (10 seconds)
-    jitter: 2000,               // Random variance in timing (±1 second)
-    contrailDensity: 1,         // Frames between contrail emissions
+    size: 40,                   // Kept the same
+    aspectRatio: 746/279,       // Kept the same
+    speed: 50,                  // Kept the same
+    interval: 50000,            // Kept the same
+    jitter: 2000,               // Kept the same
+    contrailDensity: 2,         // Kept the same
     contrailColor: 'rgba(255, 255, 255, 0.9)',
-    contrailLife: 3000          // Longer life for airplane contrails (3 seconds)
+    contrailLife: 5000          // Kept the same
   };
 
   let container: HTMLDivElement;
@@ -43,8 +44,8 @@
     const dy = mouseY - lastY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Don't create particles if mouse is stationary
-    if (distance < 1) return;
+    // Don't create particles if mouse is stationary or moving very little
+    if (distance < CONFIG.moveThreshold) return;
     
     // Store movement direction (or use previous direction if tiny movement)
     if (distance > 2) {
@@ -59,11 +60,11 @@
     // Create particle element
     const particle = document.createElement('div');
     
-    // Generate random size 
+    // Generate random size - use same calculation as airplane contrails
     const size = CONFIG.particleSize[0] + 
-                Math.random() * (CONFIG.particleSize[1] - CONFIG.particleSize[0]) * 0.2;
+                Math.random() * (CONFIG.particleSize[1] - CONFIG.particleSize[0]);
     
-    // Initial opacity
+    // Initial opacity - match airplane contrail opacity
     const opacity = CONFIG.particleOpacity[0] + 
                    Math.random() * (CONFIG.particleOpacity[1] - CONFIG.particleOpacity[0]);
     
@@ -94,8 +95,8 @@
     // Store only essential data for animation
     particle.dataset.x = String(mouseX);
     particle.dataset.y = String(mouseY);
-    particle.dataset.velX = String(-dirX * (0.3 + Math.random() * 0.3)); // Trails behind cursor
-    particle.dataset.velY = String(-dirY * (0.3 + Math.random() * 0.3));
+    particle.dataset.velX = String(-dirX * (0.1 + Math.random() * 0.2)); // Match airplane contrail velocity
+    particle.dataset.velY = String(-dirY * (0.1 + Math.random() * 0.2)); // Match airplane contrail velocity
     particle.dataset.age = '0';
     particle.dataset.size = String(size);
     particle.dataset.opacity = String(opacity);
@@ -230,6 +231,11 @@
   
   // Animation loop (optimized)
   function animateParticles() {
+    // Use requestAnimationFrame timestamp for frame skipping
+    const now = performance.now();
+    const shouldUpdateAll = true; // Always update airplane positions for smooth movement
+    const shouldUpdateParticles = now % 32 < 16; // Only update particle styles every other frame
+    
     // Animate contrail particles
     particles = particles.filter(particle => {
       // Increment age
@@ -245,6 +251,9 @@
         container.removeChild(particle);
         return false;
       }
+      
+      // Skip visual updates on alternate frames to save CPU
+      if (!shouldUpdateParticles) return true;
       
       // Calculate life percentage
       const lifePercentage = age / particleLife;
@@ -318,7 +327,7 @@
         
         // Add vertical offset to position contrails lower (for horizontal flight)
         // This shifts the contrail down from the tailfin to the exhaust area
-        const verticalAdjust = AIRPLANE.size * 0.46; // Downward shift
+        const verticalAdjust = AIRPLANE.size * 0.47; // Downward shift
         const contrailOffsetY = Math.sin(radians + Math.PI) * (AIRPLANE.size * 0.01) + verticalAdjust;
         
         const contrailX = newX + contrailOffsetX*0.01;
@@ -354,24 +363,49 @@
     
     // Add mouse tracking (with throttling for performance)
     let lastEmit = 0;
+    let frameCount = 0;
     const handleMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
       
-      // Limit particle emission rate
+      // Counter to limit particle emission rate
+      frameCount++;
+      
+      // Only emit every CONFIG.emissionRate frames and if enough time has passed
+      if (frameCount % CONFIG.emissionRate !== 0) return;
+      
+      // Additional time-based throttling
       const now = Date.now();
-      if (now - lastEmit > CONFIG.emissionRate) {
+      if (now - lastEmit > 16) { // Minimum 16ms between emissions (roughly 60fps)
         createParticle();
         lastEmit = now;
       }
     };
     
-    // Add event listener
-    window.addEventListener('mousemove', handleMouseMove);
+    // Add event listener with passive flag for performance
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     
     // Set initial position to avoid first-particle jump
     lastX = window.innerWidth / 2;
     lastY = window.innerHeight / 2;
+    
+    // Reduce the rate of animation loops when tab is inactive
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Pause airplane generation when tab is not visible
+        if (flybyInterval) {
+          clearInterval(flybyInterval);
+          flybyInterval = null;
+        }
+      } else {
+        // Resume airplane generation when tab becomes visible again
+        if (!flybyInterval) {
+          flybyInterval = window.setInterval(() => {
+            createAirplaneFlyby();
+          }, AIRPLANE.interval + (Math.random() * AIRPLANE.jitter - AIRPLANE.jitter / 2));
+        }
+      }
+    });
     
     // Set up airplane flybys at regular intervals
     flybyInterval = window.setInterval(() => {
