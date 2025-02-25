@@ -60,3 +60,44 @@ Interaction:
 - Content scrolls independently within sections
 - Navigation state resets on page refresh
 - Responsive design adapts to screen sizes
+
+
+# DATA HANDLING AND COLLECTION STRATEGY
+
+Architecture:
+- Netlify Functions for serverless backend operations
+- MongoDB (aerogen-consulting-cluster) for data storage
+- Anonymous user tracking with hashed identifiers
+- Event-based analytics collection
+
+Data Model:
+- Users collection: Unique visitor profiles with device info
+- Sessions collection: Visit-specific data with timestamps
+- Events collection: Detailed interaction events
+
+Collection Schedule:
+- Initial user document creation on first page load
+- Periodic updates during active sessions (30s intervals)
+- Critical events sent immediately (form submissions, navigation)
+- Buffered events sent in batches for performance
+
+Privacy Measures:
+- IP addresses hashed with salt from environment variables
+- Deterministic hashing allows visitor counting without PII
+- No personal information stored directly
+- Sessions linked via anonymous identifiers
+
+Analytics Capabilities:
+- Unique visitor counting through hashed IDs
+- Session duration and linger time analysis
+- Interaction heatmaps from stored coordinates
+- Navigation path analysis
+- Feature usage tracking (fun_mode toggle rate)
+- Form abandonment detection
+
+Implementation Plan:
+- constructUserDocument.js: Creates initial visit records
+- updateUserDocument.js: Updates with ongoing interaction data
+- Client-side event listeners for capturing user actions
+- Memory buffer to optimize network requests
+- Failsafe transmission attempts on page exit

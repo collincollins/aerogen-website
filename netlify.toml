@@ -1,0 +1,17 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+  functions = "netlify/functions"
+
+# Set environment variables for development mode
+[dev]
+  command = "npm run dev"
+  framework = "sveltekit"
+  targetPort = 5173
+  port = 8888
+  
+# Set up redirects for SPA navigation
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 

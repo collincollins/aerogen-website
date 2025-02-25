@@ -15,6 +15,7 @@
   import { browser, dev } from "$app/environment";
   import DevTools from "$lib/DevTools.svelte";
   import ContrailCursor from "$lib/ContrailCursor.svelte";
+  import { initAnalytics, trackEvent } from "$lib/utils/analytics";
   
   // Flag to control DevTools visibility (set to false for production)
   const showDevTools = browser && dev;
@@ -22,9 +23,26 @@
   // Track last section to detect changes
   let lastSection = '';
   
+  // Initialize analytics on mount
+  onMount(() => {
+    // Initialize analytics
+    initAnalytics();
+    
+    // Initialize EmailJS
+    emailjs.init({
+      publicKey: 'FKqgmdjZ04bIrLnAu',
+    });
+  });
+  
   // Scroll to top when section changes
   currentSection.subscribe(section => {
     if (browser && lastSection && section !== lastSection) {
+      // Track navigation event
+      trackEvent('navigation', { 
+        from: lastSection,
+        to: section
+      });
+      
       // Wait a small amount of time for the transition to start
       setTimeout(() => {
         // Target the specific scrollable container with a more precise selector
@@ -70,21 +88,6 @@
   let isSubmitting = false;
   let submitSuccess = false;
   let submitError = "";
-  
-  // Initialize EmailJS and ensure content visibility in production
-  onMount(() => {
-    // Initialize EmailJS
-    if (browser && EMAILJS_PUBLIC_KEY) {
-      emailjs.init({
-        publicKey: EMAILJS_PUBLIC_KEY
-      });
-    }
-    
-    // Ensure content is always visible in production
-    if (!dev) {
-      showContentToggle.set(true);
-    }
-  });
   
   // Handle form submission
   const handleSubmit = async () => {
