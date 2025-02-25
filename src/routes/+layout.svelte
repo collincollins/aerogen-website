@@ -216,7 +216,7 @@
             </div>
             
             <p class="text-primary-dark leading-relaxed mb-5 mt-0 font-aileron font-light">
-              That spark led me to the U.S. Air Force, where I sharpened my skills on C-17 jets, followed by a 20+ year career leading operations at Tropic Air and Southern Airways Express, delivering expansions, cost savings, and high-performing teams. Now, I’m bringing that experience to Aerogen, Inc.
+              That spark led me to the U.S. Air Force, where I sharpened my skills on C-17 jets, followed by a 15+ year career leading operations at Tropic Air and Southern Airways Express, delivering expansions, cost savings, and high-performing teams. Now, I’m bringing that experience to Aerogen, Inc.
             </p>
             
             <p class="text-primary-dark leading-relaxed font-aileron font-light">
