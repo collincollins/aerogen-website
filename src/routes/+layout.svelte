@@ -38,12 +38,18 @@
   let submitSuccess = false;
   let submitError = "";
   
-  // Initialize EmailJS when the component mounts
+  // Initialize EmailJS and ensure content visibility in production
   onMount(() => {
+    // Initialize EmailJS
     if (browser && EMAILJS_PUBLIC_KEY) {
       emailjs.init({
         publicKey: EMAILJS_PUBLIC_KEY
       });
+    }
+    
+    // Ensure content is always visible in production
+    if (!import.meta.env.DEV) {
+      showContentToggle.set(true);
     }
   });
   
