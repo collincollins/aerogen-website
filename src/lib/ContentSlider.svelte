@@ -39,21 +39,21 @@
   >
     <!-- main content -->
     <div class="min-w-full hide-scrollbar">
-      <div class="mx-[10%] hide-scrollbar">
+      <div class="mx-[8%] hide-scrollbar">
         <slot name="main" />
       </div>
     </div>
 
     <!-- contact content -->
     <div class="min-w-full hide-scrollbar">
-      <div class="mx-[10%] hide-scrollbar">
+      <div class="mx-[6%] hide-scrollbar">
         <slot name="contact" />
       </div>
     </div>
 
     <!-- work content (preserved but hidden from navigation) -->
     <div class="min-w-full hide-scrollbar">
-      <div class="mx-[10%] hide-scrollbar">
+      <div class="mx-[6%] hide-scrollbar">
         <slot name="work" />
       </div>
     </div>

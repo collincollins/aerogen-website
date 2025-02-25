@@ -41,7 +41,7 @@
             </a>
           {/each}
         </div>
-        <p class="text-sm text-primary-dark font-aileron">&copy; {new Date().getFullYear()} Aerogen Inc. All rights reserved.</p>
+        <p class="text-sm text-primary-dark font-aileron font-light">&copy; {new Date().getFullYear()} Aerogen Inc. All rights reserved.</p>
       </div>
     </div>
   </div>

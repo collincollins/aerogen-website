@@ -159,7 +159,7 @@
               Aviation consulting with decades of operational expertise
             </p>
             <hr class="w-24 border-primary/90 mb-6" />
-            <p class="text-primary-dark leading-relaxed font-aileron">
+            <p class="text-primary-dark leading-relaxed font-aileron font-light">
               From airline operations to strategic growth, we bring executive-level experience 
               from leading airlines to help your aviation business reach new heights.
             </p>
@@ -177,17 +177,17 @@
               <h3 class="text-2xl font-light text-primary-dark font-aileron mb-[-2px]">About the Founder</h3>
               <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left font-light">John Greif IV</p>
               
-              <p class="text-primary-dark leading-relaxed mb-4 font-aileron">
+              <p class="text-primary-dark leading-relaxed mb-4 font-aileron font-light">
                 I've been part of aviation since childhood. My father founded Tropic Air in Belize in 1979, which grew to become the country's largest airline. Growing up in this environment, I learned the aviation business from every angle.
               </p>
             </div>
           </div>
           
-          <p class="text-primary-dark leading-relaxed mb-4 font-aileron">
+          <p class="text-primary-dark leading-relaxed mb-4 font-aileron font-light">
             My path led to the U.S. Air Force where I flew C-17 aircraft, followed by over 20 years in airline leadership. During this time, I managed operations at Tropic Air and Southern Airways Express, helping the former develop into the largest airline in Belize and the latter develop into the largest commuter airline in the United States.
           </p>
           
-          <p class="text-primary-dark leading-relaxed font-aileron">
+          <p class="text-primary-dark leading-relaxed font-aileron font-light">
             These experiences in operational leadership, team building, and strategic expansion now inform my work at Aerogen Inc., where we provide specialized aviation consulting services.
           </p>
         </GlassCard>
@@ -202,7 +202,7 @@
           
           <form on:submit|preventDefault={handleSubmit} class="space-y-4">
             <div>
-              <label for="name" class="block text-sm font-medium text-primary-dark mb-1 font-aileron">Name</label>
+              <label for="name" class="block text-sm font-medium text-primary-dark mb-1 font-aileron font-light">Name</label>
               <input 
                 type="text" 
                 id="name" 
@@ -213,7 +213,7 @@
             </div>
             
             <div>
-              <label for="email" class="block text-sm font-medium text-primary-dark mb-1 font-aileron">Email</label>
+              <label for="email" class="block text-sm font-medium text-primary-dark mb-1 font-aileron font-light">Email</label>
               <input 
                 type="email" 
                 id="email" 
@@ -224,7 +224,7 @@
             </div>
             
             <div>
-              <label for="message" class="block text-sm font-medium text-primary-dark mb-1 font-aileron">Message</label>
+              <label for="message" class="block text-sm font-medium text-primary-dark mb-1 font-aileron font-light ">Message</label>
               <textarea 
                 id="message" 
                 bind:value={message} 

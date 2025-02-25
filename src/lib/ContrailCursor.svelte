@@ -4,8 +4,8 @@
   
   // configuration for a smoke-like contrail effect (optimized)
   const CONFIG = {
-    maxParticles: 400,          // increased to allow for longer contrails
-    particleLife: 3000,         // increased to match airplane contrail life (5000)
+    maxParticles: 200,          // increased to allow for longer contrails
+    particleLife: 2000,         // increased to match airplane contrail life (5000)
     emissionRate: 0.5,            // set to same value as airplane.contrailDensity
     particleSize: [3, 7],       // kept the same
     particleOpacity: [0.6, 0.9], // kept the same
@@ -22,7 +22,7 @@
     jitter: 2000,               // kept the same
     contrailDensity: 2,         // kept the same
     contrailColor: 'rgba(255, 255, 255, 0.9)',
-    contrailLife: 5000          // kept the same
+    contrailLife: 2000          // kept the same
   };
 
   let container: HTMLDivElement;
