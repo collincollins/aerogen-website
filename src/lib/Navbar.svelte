@@ -25,11 +25,11 @@
   const updateSize = (matches: boolean) => {
     // logo cloud sizing
     logoContainerSize = matches ? "w-[10rem] h-[10rem]" : "w-[6rem] h-[6rem]";
-    logoContainerPosition = matches ? "top-[-2rem] left-[0rem]" : "top-[-1.5rem] left-[-0rem]";
+    logoContainerPosition = matches ? "top-[-2rem] left-[0rem]" : "top-[-0.8rem] left-[-0rem]";
     
     // contact cloud sizing (slightly smaller than logo)
     contactContainerSize = matches ? "w-[10rem] h-[10rem]" : "w-[6rem] h-[6rem]";
-    contactContainerPosition = matches ? "top-[-2rem] right-[0rem]" : "top-[-1.5rem] right-[0rem]";
+    contactContainerPosition = matches ? "top-[-2rem] right-[0rem]" : "top-[-0.7rem] right-[0rem]";
     
     // envelope icon sizing - larger on desktop for better visibility
     envelopeIconSize = matches ? "h-8 w-8" : "h-6 w-6";
