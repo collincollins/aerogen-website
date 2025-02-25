@@ -172,13 +172,18 @@
       <div class="absolute inset-0 flex flex-col items-center justify-center"
            class:transition-all={!disableTransitions} class:duration-200={!disableTransitions}>
         <button 
-          class="relative border-0 p-0 {questionMarkSize} text-primary font-aileron font-bold active:scale-90 transition-transform duration-50"
+          class="relative border-0 p-0 text-primary font-aileron font-bold active:scale-90 transition-transform duration-50 flex items-center justify-center"
           class:opacity-90={$currentSection !== 'contact'}
           class:scale-90={isContactClicking}
           on:click={handleContactClick}
           aria-label="Contact section"
         >
-          ?
+          <!-- Envelope SVG icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+               class="{questionMarkSize} w-[1.6rem] h-[1.6rem]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <path d="M22 6l-10 7L2 6"></path>
+          </svg>
         </button>
       </div>
     </div>

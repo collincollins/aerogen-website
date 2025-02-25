@@ -142,11 +142,11 @@
         <!-- Main card -->
         <GlassCard width="w-full max-w-2xl">
           <div class="flex flex-col items-center text-center">
-            <p class="text-primary text-xl leading-relaxed mb-6">
+            <p class="text-primary-dark text-xl leading-relaxed mb-6">
               Aviation consulting with decades of operational expertise
             </p>
             <hr class="w-24 border-primary/90 mb-6" />
-            <p class="text-primary leading-relaxed">
+            <p class="text-primary-dark leading-relaxed">
               From airline operations to strategic growth, we bring executive-level experience 
               from leading airlines to help your aviation business reach new heights.
             </p>
@@ -161,19 +161,20 @@
             </div>
             
             <div>
-              <h3 class="text-2xl font-light text-primary font-aileron mb-4">About the Founder</h3>
+              <h3 class="text-2xl font-light text-primary-dark font-aileron mb-[-2px]">About the Founder</h3>
+              <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left">John Greif IV</p>
               
-              <p class="text-primary leading-relaxed mb-4">
+              <p class="text-primary-dark leading-relaxed mb-4">
                 I've been part of aviation since childhood. My father founded Tropic Air in Belize in 1979, which grew to become the country's largest airline. Growing up in this environment, I learned the aviation business from every angle.
               </p>
             </div>
           </div>
           
-          <p class="text-primary leading-relaxed mb-4">
+          <p class="text-primary-dark leading-relaxed mb-4">
             My path led to the U.S. Air Force where I flew C-17 aircraft, followed by over 20 years in airline leadership. During this time, I managed operations at Tropic Air and Southern Airways Express, helping the former develop into the largest airline in Belize and the latter develop into the largest commuter airline in the United States.
           </p>
           
-          <p class="text-primary leading-relaxed">
+          <p class="text-primary-dark leading-relaxed">
             These experiences in operational leadership, team building, and strategic expansion now inform my work at Aerogen Inc., where we provide specialized aviation consulting services.
           </p>
         </GlassCard>
@@ -183,23 +184,23 @@
         <!-- Contact inquiry form moved from the main page -->
         <GlassCard width="w-full max-w-2xl" padding="p-6">
           <div class="text-center mb-5">
-            <h2 class="text-2xl font-light text-primary font-aileron">Contact Us</h2>
+            <h2 class="text-2xl font-light text-primary-dark font-aileron">Contact Us</h2>
           </div>
           
           <form on:submit|preventDefault={handleSubmit} class="space-y-4">
             <div>
-              <label for="name" class="block text-sm font-medium text-gray-700 mb-1 font-aileron">Name</label>
+              <label for="name" class="block text-sm font-medium text-primary-dark mb-1 font-aileron">Name</label>
               <input 
                 type="text" 
                 id="name" 
                 bind:value={name} 
                 required 
-                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/80 backdrop-blur-sm font-aileron"
+                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-dark/50 focus:border-primary-dark/50 bg-white/80 backdrop-blur-sm font-aileron"
               />
             </div>
             
             <div>
-              <label for="email" class="block text-sm font-medium text-gray-700 mb-1 font-aileron">Email</label>
+              <label for="email" class="block text-sm font-medium text-primary-dark mb-1 font-aileron">Email</label>
               <input 
                 type="email" 
                 id="email" 
@@ -210,7 +211,7 @@
             </div>
             
             <div>
-              <label for="message" class="block text-sm font-medium text-gray-700 mb-1 font-aileron">Message</label>
+              <label for="message" class="block text-sm font-medium text-primary-dark mb-1 font-aileron">Message</label>
               <textarea 
                 id="message" 
                 bind:value={message} 
