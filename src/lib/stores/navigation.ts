@@ -10,3 +10,7 @@ export const currentSection = writable<Section>('main');
 
 // Control visual effects (clouds, contrails, airplane)
 export const fun_mode = writable(false); 
+
+// Specifically control airplane contrails (independent of fun_mode)
+// Set to false to disable only the airplane contrails
+export const airplane_contrail = writable(false); 

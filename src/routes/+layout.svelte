@@ -209,7 +209,7 @@
                 <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left font-light">John E. Greif IV</p>
                 
                 <p class="text-primary-dark leading-relaxed mb-0 font-aileron font-light">
-                  I’ve lived aviation since day one. My dad founded Tropic Air in Belize in 1979, and I grew up immersed in the world of flight and business, learning the craft from the ground up.
+                  I’ve lived aviation since day one. My father founded Tropic Air in Belize in 1979, and I grew up immersed in the world of flight and business, learning the craft from the ground up.
 
                 </p>
               </div>

@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
-  import { fun_mode } from './stores/navigation';
+  import { fun_mode, airplane_contrail } from './stores/navigation';
   
   // Check if the browser is Chrome
   let isChrome = false;
   
   // Subscribe to fun_mode to control visual effects
-  let funModeEnabled = true;
+  let funModeEnabled = false;
+  
+  // Subscribe to airplane_contrail to specifically control airplane contrails
+  let airplaneContrailEnabled = false;
   
   // separate configurations for cursor and airplane contrails
   const CONFIG = {
@@ -35,7 +38,7 @@
     },
     
     // airplane parameters
-    airplaneInterval: 40000, // time between airplane appearances (ms)
+    airplaneInterval: 30000, // time between airplane appearances (ms)
     airplaneSpeed: 60,       // speed of airplane movement
     airplaneSize: 40,        // base size of the airplane
     airplaneAspectRatio: 746/279 // width/height ratio of the airplane image
@@ -132,7 +135,7 @@
   
   // create a new airplane that will fly across the screen
   function createAirplane() {
-    if (!browser || !container || !funModeEnabled) return; // Skip if fun_mode is disabled
+    if (!browser || !container || !funModeEnabled) return; // Only check if fun_mode is disabled
     
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -326,8 +329,8 @@
       // update airplane position
       airplane.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotation}deg)`;
       
-      // create contrail particles at regular intervals - only if not Chrome
-      if (!isChrome && now - lastEmitTime > CONFIG.airplane.emissionRate) {
+      // create contrail particles at regular intervals - only if not Chrome and airplane contrails are enabled
+      if (!isChrome && airplaneContrailEnabled && now - lastEmitTime > CONFIG.airplane.emissionRate) {
         // calculate contrail position (behind the airplane)
         const radians = rotation * (Math.PI / 180);
         
@@ -389,12 +392,24 @@
     
     // Subscribe to fun_mode store
     const unsubscribeFunMode = fun_mode.subscribe(value => {
+      const wasDisabled = !funModeEnabled;
       funModeEnabled = value;
       
       // Clean up airplanes if fun_mode is disabled
       if (!funModeEnabled) {
         clearAirplanes();
+      } 
+      // Create initial airplane if fun_mode was just turned on
+      else if (wasDisabled) {
+        setTimeout(createAirplane, 2000);
       }
+    });
+    
+    // Subscribe to airplane_contrail store
+    const unsubscribeAirplaneContrail = airplane_contrail.subscribe(value => {
+      airplaneContrailEnabled = value;
+      
+      // Don't remove airplanes when contrails are disabled - only affect contrail rendering
     });
     
     // create canvas
@@ -448,6 +463,7 @@
     return () => {
       // clean up
       unsubscribeFunMode();
+      unsubscribeAirplaneContrail();
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
