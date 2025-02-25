@@ -1,9 +1,12 @@
 <script lang="ts">
   import { showContentToggle, showExclusionZones } from './stores/devTools';
   import { dev } from '$app/environment';
+  import { browser } from '$app/environment';
+  import { onMount, onDestroy } from 'svelte';
   
   let showContent = true;
   let showZones = false;
+  let showPerformanceMonitor = false;
   
   // subscribe to the stores and update local state
   showContentToggle.subscribe(value => {
@@ -29,6 +32,71 @@
     showZones = !showZones;
     showExclusionZones.set(showZones);
   };
+  
+  // stats.js instance for performance monitoring
+  let stats;
+  
+  // toggle performance monitor visibility
+  function togglePerformanceMonitor() {
+    showPerformanceMonitor = !showPerformanceMonitor;
+    updateStatsVisibility();
+  }
+  
+  // setup stats.js performance monitor
+  function setupPerformanceMonitor() {
+    if (!browser || !dev) return;
+    
+    // dynamically import stats.js
+    import('stats.js').then(statsModule => {
+      stats = new statsModule.default();
+      
+      // configure stats panels
+      stats.showPanel(0); // FPS
+      
+      // style the container
+      const statsElement = stats.dom;
+      statsElement.style.position = 'fixed';
+      statsElement.style.left = '10px';
+      statsElement.style.bottom = '10px';
+      statsElement.style.zIndex = '9999';
+      
+      // add to the document only if visible
+      if (showPerformanceMonitor) {
+        document.body.appendChild(statsElement);
+      }
+      
+      // start monitoring
+      requestAnimationFrame(function loop() {
+        stats.update();
+        requestAnimationFrame(loop);
+      });
+    }).catch(error => {
+      console.error('Failed to load stats.js:', error);
+    });
+  }
+  
+  // update stats visibility
+  function updateStatsVisibility() {
+    if (!stats) return;
+    
+    if (showPerformanceMonitor) {
+      document.body.appendChild(stats.dom);
+    } else if (document.body.contains(stats.dom)) {
+      document.body.removeChild(stats.dom);
+    }
+  }
+  
+  onMount(() => {
+    if (browser && dev) {
+      setupPerformanceMonitor();
+    }
+  });
+  
+  onDestroy(() => {
+    if (stats && stats.dom && document.body.contains(stats.dom)) {
+      document.body.removeChild(stats.dom);
+    }
+  });
 </script>
 
 <!-- only render in development mode -->
@@ -68,6 +136,17 @@
         <path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" clip-rule="evenodd" />
       </svg>
       {showZones ? "Hide Exclusion Zones" : "Show Exclusion Zones"}
+    </button>
+    
+    <!-- performance monitor toggle -->
+    <button
+      on:click={togglePerformanceMonitor}
+      class:bg-green-500={showPerformanceMonitor}
+      class="p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+      tabindex="0"
+      aria-label="Toggle performance monitor"
+    >
+      {showPerformanceMonitor ? 'Hide' : 'Show'} Performance
     </button>
   </div>
 {/if} 

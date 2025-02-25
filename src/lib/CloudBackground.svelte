@@ -17,9 +17,18 @@
   let isVisible = true;
   let isPageVisible = true; // track page visibility
   let exclusionZoneObjects: THREE.Group[] = [];
+  let lastSectionForRender = ''; // track last section for render optimization
+  let isTransitioning = false; // track if we're transitioning between sections
+  let transitionStartTime = 0; // track when transition started
+  let transitionFromPosition = 0; // track starting position for transition
+  let transitionToPosition = 0; // track target position for transition
+  const TRANSITION_DURATION = 300; // match duration with content slides (ms)
+  
+  // pre-calculate cloud target positions during transitions to ensure consistency
+  let cloudTargetPositions: Map<THREE.Group, number> = new Map();
 
   // define all available sections
-  const sections = {
+  const sections: Record<string, { position: number }> = {
     main: { position: 0 },
     contact: { position: 100 },
     work: { position: 200 }
@@ -52,8 +61,8 @@
   const createCloud = () => {
     const group = new THREE.Group();
     
-    // restore original cloud appearance but keep optimized geometry
-    const sphereGeometry = new THREE.SphereGeometry(4, 16, 16);
+    // create geometries and materials once, then reuse
+    const sphereGeometry = new THREE.SphereGeometry(4, 12, 12); // reduced geometry complexity
     const material = new THREE.MeshPhysicalMaterial({
       color: 0xFFFFFF,
       roughness: 0.9,
@@ -66,12 +75,11 @@
       opacity: 0.95,
     });
 
-    // restore denser sphere formation from navbar version for better visual appearance
+    // use original denser cloud layout
     const positions = [];
     const radius = 10;
     const layers = 3;
     
-    // use original denser cloud layout
     for (let layer = 0; layer < layers; layer++) {
       const layerRadius = radius - (layer * 2);
       // restore original sphere count per layer for denser appearance
@@ -102,10 +110,18 @@
       sphere.position.y = pos.y + (Math.random() - 0.5) * 2;
       sphere.position.z = pos.z + (Math.random() - 0.5) * 2;
       
-      // add subtle vertical oscillation to each sphere
-      sphere.userData.oscillationSpeed = 0.0005 + Math.random() * 0.05; // reduced for performance
-      sphere.userData.oscillationOffset = Math.random() * Math.PI * 2;
-      sphere.userData.oscillationAmplitude = 0.1 + Math.random() * 0.2;
+      // add subtle vertical oscillation to each sphere, but pre-compute some values
+      const oscillationSpeed = 0.0005 + Math.random() * 0.05; // reduced for performance
+      const oscillationOffset = Math.random() * Math.PI * 2;
+      const oscillationAmplitude = 0.1 + Math.random() * 0.2;
+      
+      // store these values more efficiently
+      sphere.userData = {
+        oscillationSpeed,
+        oscillationOffset,
+        oscillationAmplitude,
+        originalY: sphere.position.y
+      };
       
       group.add(sphere);
     });
@@ -663,61 +679,119 @@
     setupClouds();
   };
 
-  const easeInOutCubic = (t: number): number => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  };
-
   const animate = (timestamp: number) => {
     frameId = requestAnimationFrame(animate);
     
     // skip animation when tab is not visible
     if (!isPageVisible) return;
     
-    // frame rate limiter
+    // frame rate limiter - more aggressive for background
     const elapsed = timestamp - lastRenderTime;
     if (elapsed < frameInterval && isVisible) return;
     
     lastRenderTime = timestamp;
     
-    const baseOffset = sections[$currentSection].position;
+    // detect section changes and start transitions
+    if ($currentSection !== lastSectionForRender && !isTransitioning) {
+      isTransitioning = true;
+      transitionStartTime = timestamp;
+      transitionFromPosition = lastSectionForRender ? sections[lastSectionForRender]?.position || 0 : 0;
+      transitionToPosition = sections[$currentSection].position;
+      lastSectionForRender = $currentSection;
+    }
+    
+    // calculate current position based on transition or current section
+    let baseOffset;
+    if (isTransitioning) {
+      const transitionTime = timestamp - transitionStartTime;
+      const progress = Math.min(transitionTime / TRANSITION_DURATION, 1);
+      
+      // use smooth easing function for transitions
+      const easedProgress = easeInOutCubic(progress);
+      baseOffset = transitionFromPosition + (transitionToPosition - transitionFromPosition) * easedProgress;
+      
+      // end transition when complete
+      if (progress >= 1) {
+        isTransitioning = false;
+      }
+    } else {
+      baseOffset = sections[$currentSection].position;
+    }
+    
     const time = performance.now() * 0.001;
     
     let needsRender = false;
+    
+    // always render during transitions
+    if (isTransitioning) {
+      needsRender = true;
+    }
     
     // ensure rendering when exclusion zones are toggled
     if ($showExclusionZones && exclusionZoneObjects.length > 0) {
       needsRender = true;
     }
     
-    clouds.forEach(cloud => {
+    // update more clouds during transitions
+    const cloudUpdateCount = isTransitioning ? 
+      clouds.length : // update all clouds during transition
+      Math.min(clouds.length, 20); // otherwise only update 20
+    
+    // use sequential updating during transitions for more consistency
+    const startIndex = isTransitioning ? 0 : Math.floor(Math.random() * clouds.length);
+    
+    for (let i = 0; i < cloudUpdateCount; i++) {
+      const index = (startIndex + i) % clouds.length;
+      const cloud = clouds[index];
+      
       // only process visible clouds
-      if (!isInView(cloud.position)) return;
+      if (!isInView(cloud.position)) continue;
       
       needsRender = true;
       
       // apply individual rotation around Y axis only
       cloud.rotation.y += cloud.userData.rotationSpeed;
       
-      // apply subtle vertical oscillation to each sphere in the cloud
-      // only if the cloud is close enough to be visible
-      cloud.children.forEach((object) => {
-        if (object.type === 'Mesh' && object.userData.oscillationSpeed) {
-          const oscillation = Math.sin(time * object.userData.oscillationSpeed + object.userData.oscillationOffset) * object.userData.oscillationAmplitude;
-          object.position.y = object.userData.originalY + oscillation;
-        }
-      });
-      
       // calculate eased parallax movement
       const targetX = cloud.userData.originalX - (baseOffset * cloud.userData.parallaxSpeed);
       const currentX = cloud.position.x;
-      const easedX = currentX + (targetX - currentX) * 0.1;
-      cloud.position.x = easedX;
-    });
+      
+      // use a larger easing factor during transitions for smoother motion
+      const easingFactor = isTransitioning ? 0.25 : 0.05;
+      
+      // lower threshold during transitions
+      const updateThreshold = isTransitioning ? 0.01 : 0.05;
+      
+      // only update if the change is significant (small threshold during transitions)
+      if (Math.abs(targetX - currentX) > updateThreshold) {
+        const easedX = currentX + (targetX - currentX) * easingFactor;
+        cloud.position.x = easedX;
+        
+        // apply subtle vertical oscillation to each sphere in the cloud
+        // only if the cloud is close enough to be visible and only update every other frame
+        if (i % 2 === 0) {
+          cloud.children.forEach((object) => {
+            if (object.type === 'Mesh') {
+              const userData = object.userData;
+              if (userData.oscillationSpeed) {
+                const oscillation = Math.sin(time * userData.oscillationSpeed + userData.oscillationOffset) * userData.oscillationAmplitude;
+                object.position.y = userData.originalY + oscillation;
+              }
+            }
+          });
+        }
+      }
+    }
 
-    // only render when necessary
+    // only render when something has changed
     if (needsRender || !isVisible) {
       renderer.render(scene, camera);
     }
+  };
+
+  // easing function for smoother transitions
+  const easeInOutCubic = (t: number): number => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   };
 
   onMount(() => {
