@@ -700,15 +700,20 @@
       transitionToPosition = sections[$currentSection].position;
       lastSectionForRender = $currentSection;
       
-      // use TWEEN.js for smooth cloud transitions
+      // set transition properties to match content transitions
+      // ContentSlider uses: "transition-transform duration-500 ease-out" with cubicInOut easing
+      
       clouds.forEach(cloud => {
+        // get current position
         const startX = cloud.position.x;
+        
+        // xalculate final position (original position - section offset)
         const targetX = cloud.userData.originalX - (transitionToPosition * cloud.userData.parallaxSpeed);
         
-        // create a tween for each cloud with natural easing
+        // create horizontal slide tween that exactly matches ContentSlider
         new Tween({ x: startX })
-          .to({ x: targetX }, TRANSITION_DURATION)
-          .easing(Easing.Cubic.InOut)
+          .to({ x: targetX }, 500) // match the 500ms duration from ContentSlider
+          .easing(Easing.Cubic.InOut) // match the cubicInOut easing from ContentSlider
           .onUpdate(function(obj: { x: number }) {
             cloud.position.x = obj.x;
           })
@@ -717,7 +722,7 @@
       
       // create a tween to track transition completion
       new Tween({ progress: 0 })
-        .to({ progress: 1 }, TRANSITION_DURATION)
+        .to({ progress: 1 }, 500) // match 500ms duration
         .onComplete(() => {
           isTransitioning = false;
         })
