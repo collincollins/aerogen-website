@@ -157,7 +157,7 @@
         <GlassCard width="w-full max-w-4xl mt-[-30px]">
           <div class="flex flex-col md:flex-row gap-8 items-center mb-6">
             <div class="w-48 h-48 rounded-full overflow-hidden border-4 border-primary/90 shadow-lg flex-shrink-0">
-              <img src="/src/images/founder.jpeg" alt="Founder of Aerogen Inc." class="w-full h-full object-cover" />
+              <img src="/founder.jpeg" alt="Founder of Aerogen Inc." class="w-full h-full object-cover" />
             </div>
             
             <div>
