@@ -66,12 +66,12 @@
   }
   
   .title-glow {
-    animation: title-glow 5s ease-in-out infinite;
+    animation: title-glow 10s ease-in-out infinite;
     will-change: text-shadow;
   }
   
   .glow-effect {
-    animation: subtle-pulse 5s ease-in-out infinite;
+    animation: subtle-pulse 10s ease-in-out infinite;
   }
   
   .hide-scrollbar {

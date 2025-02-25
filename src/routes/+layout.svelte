@@ -14,6 +14,7 @@
   // Import DevTools only in development mode
   import { browser } from "$app/environment";
   import DevTools from "$lib/DevTools.svelte";
+  import ContrailCursor from "$lib/ContrailCursor.svelte";
   
   // Flag to control DevTools visibility (set to false for production)
   const showDevTools = browser && import.meta.env.DEV;
@@ -125,6 +126,9 @@
 
 <!-- Cloud background -->
 <CloudBackground />
+
+<!-- Contrail cursor effect - positioned behind content but above background -->
+<ContrailCursor />
 
 <!-- Scrollable content container -->
 <div class="absolute inset-0 overflow-y-auto transition-opacity duration-300 hide-scrollbar" class:opacity-0={!showContent} class:pointer-events-none={!showContent}>
