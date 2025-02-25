@@ -206,20 +206,21 @@
               
               <div>
                 <h3 class="text-2xl font-light text-primary-dark font-aileron mb-[-2px]">About the Founder</h3>
-                <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left font-light">John Greif IV</p>
+                <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left font-light">John E. Greif IV</p>
                 
-                <p class="text-primary-dark leading-relaxed mb-4 font-aileron font-light">
-                  I've been part of aviation since childhood. My father founded Tropic Air in Belize in 1979, which grew to become the country's largest airline. Growing up in this environment, I learned the aviation business from every angle.
+                <p class="text-primary-dark leading-relaxed mb-0 font-aileron font-light">
+                  I’ve lived aviation since day one. My dad founded Tropic Air in Belize in 1979, and I grew up immersed in the world of flight and business, learning the craft from the ground up.
+
                 </p>
               </div>
             </div>
             
-            <p class="text-primary-dark leading-relaxed mb-4 font-aileron font-light">
-              My path led to the U.S. Air Force where I flew C-17 aircraft, followed by over 20 years in airline leadership. During this time, I managed operations at Tropic Air and Southern Airways Express, helping the former develop into the largest airline in Belize and the latter develop into the largest commuter airline in the United States.
+            <p class="text-primary-dark leading-relaxed mb-5 mt-0 font-aileron font-light">
+              That spark led me to the U.S. Air Force, where I sharpened my skills on C-17 jets, followed by a 20+ year career leading operations at Tropic Air and Southern Airways Express, delivering expansions, cost savings, and high-performing teams. Now, I’m bringing that experience to Aerogen, Inc.
             </p>
             
             <p class="text-primary-dark leading-relaxed font-aileron font-light">
-              These experiences in operational leadership, team building, and strategic expansion now inform my work at Aerogen Inc., where we provide specialized aviation consulting services.
+              Off duty, I’m home with my wife and five kids, where my love for the skies finds its balance in family.
             </p>
           </GlassCard>
         </div>

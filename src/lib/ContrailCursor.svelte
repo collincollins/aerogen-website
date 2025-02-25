@@ -1,9 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
+  import { fun_mode } from './stores/navigation';
   
   // Check if the browser is Chrome
   let isChrome = false;
+  
+  // Subscribe to fun_mode to control visual effects
+  let funModeEnabled = true;
   
   // separate configurations for cursor and airplane contrails
   const CONFIG = {
@@ -128,7 +132,7 @@
   
   // create a new airplane that will fly across the screen
   function createAirplane() {
-    if (!browser || !container) return; // Allow airplanes in Chrome, just no contrails
+    if (!browser || !container || !funModeEnabled) return; // Skip if fun_mode is disabled
     
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -203,6 +207,12 @@
     
     // clear canvas
     ctx.clearRect(0, 0, width, height);
+    
+    // Skip all particle generation and drawing if fun_mode is disabled
+    if (!funModeEnabled) {
+      animationId = requestAnimationFrame(animate);
+      return;
+    }
     
     // check if we should emit new cursor particles
     if (now - lastEmitTime > CONFIG.cursor.emissionRate) {
@@ -358,6 +368,16 @@
     ctx.globalCompositeOperation = 'lighter'; // makes overlapping particles brighter
   }
   
+  // Function to clean up airplane elements when fun_mode changes
+  function clearAirplanes() {
+    airplaneElements.forEach(airplane => {
+      if (container && container.contains(airplane)) {
+        container.removeChild(airplane);
+      }
+    });
+    airplaneElements = [];
+  }
+  
   onMount(() => {
     if (!browser) return;
     
@@ -366,6 +386,16 @@
     
     // Set the disableCloudRotation flag based on browser
     disableCloudRotation = isChrome;
+    
+    // Subscribe to fun_mode store
+    const unsubscribeFunMode = fun_mode.subscribe(value => {
+      funModeEnabled = value;
+      
+      // Clean up airplanes if fun_mode is disabled
+      if (!funModeEnabled) {
+        clearAirplanes();
+      }
+    });
     
     // create canvas
     canvas = document.createElement('canvas');
@@ -405,16 +435,19 @@
     
     // set up airplane flybys
     flybyInterval = window.setInterval(() => {
-      if (isPageVisible && !document.hidden) {
+      if (isPageVisible && !document.hidden && funModeEnabled) {
         createAirplane();
       }
     }, CONFIG.airplaneInterval);
     
     // create an initial flyby
-    setTimeout(createAirplane, 2000);
+    if (funModeEnabled) {
+      setTimeout(createAirplane, 2000);
+    }
     
     return () => {
       // clean up
+      unsubscribeFunMode();
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
