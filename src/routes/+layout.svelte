@@ -216,7 +216,7 @@
             </div>
             
             <p class="text-primary-dark leading-relaxed mb-5 mt-0 font-aileron font-light">
-              That drive led me to the U.S. Air Force, where I honed my skills on the C-17, followed by 15+ years leading operations at Tropic Air and Southern Airways Express, the U.S.’s largest commuter airline. I pushed route growth by 30%, slashed costs by millions, boosted revenue by millions, and built teams that delivered every time. Now, at Aerogen, Inc., I’m putting that experience to work, helping businesses grow smarter and stronger.
+              That drive led me to the U.S. Air Force, where I honed my skills on the C-17, followed by 15+ years leading operations at Tropic Air and Southern Airways Express, the U.S.’s largest commuter airline. I led efforts to grow routes by 35%, slash costs by millions, boost revenue by millions, and build teams that delivered every time. Now, at Aerogen, Inc., I’m putting that experience to work, helping businesses grow smarter and stronger.
             </p>
             
             <p class="text-primary-dark leading-relaxed font-aileron font-light">
