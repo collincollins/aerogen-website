@@ -1,17 +1,18 @@
 <script lang="ts">
-  import { currentSection } from './stores/navigation';
+  import { currentSection, activeNavSections, type Section } from './stores/navigation';
   import { slide } from 'svelte/transition';
   import { cubicInOut } from 'svelte/easing';
 
   const sections = {
     main: {
-      component: null, // Will be rendered directly from +page.svelte
+      component: null, // will be rendered directly from +page.svelte
       position: 0
     },
-    about: {
-      component: null, // We'll create these components next
+    contact: {
+      component: null, // we'll create these components next
       position: 100
     },
+    // keep work section for future use
     work: {
       component: null,
       position: 200
@@ -19,26 +20,42 @@
   };
 
   $: transform = `translateX(-${sections[$currentSection].position}%)`;
+  
+  // helper function to check if a section is active
+  function isSectionActive(section: Section): boolean {
+    return activeNavSections.includes(section);
+  }
+  
+  // prevent navigation to inactive sections
+  $: if (!isSectionActive($currentSection)) {
+    currentSection.set('main');
+  }
 </script>
 
-<div class="relative w-full h-full overflow-hidden">
+<div class="relative w-full h-full overflow-hidden hide-scrollbar">
   <div
-    class="flex transition-transform duration-300 ease-in-out"
+    class="flex transition-transform duration-500 ease-out hide-scrollbar"
     style="transform: {transform}"
   >
-    <!-- Main content -->
-    <div class="min-w-full">
-      <slot name="main" />
+    <!-- main content -->
+    <div class="min-w-full hide-scrollbar">
+      <div class="mx-[5%] hide-scrollbar">
+        <slot name="main" />
+      </div>
     </div>
 
-    <!-- About content -->
-    <div class="min-w-full">
-      <slot name="about" />
+    <!-- contact content -->
+    <div class="min-w-full hide-scrollbar">
+      <div class="mx-[5%] hide-scrollbar">
+        <slot name="contact" />
+      </div>
     </div>
 
-    <!-- Work content -->
-    <div class="min-w-full">
-      <slot name="work" />
+    <!-- work content (preserved but hidden from navigation) -->
+    <div class="min-w-full hide-scrollbar">
+      <div class="mx-[5%] hide-scrollbar">
+        <slot name="work" />
+      </div>
     </div>
   </div>
 </div> 
