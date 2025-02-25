@@ -39,12 +39,12 @@
   });
   
   // EmailJS configuration - these should be environment variables in production
-  // In a real production app, these would be loaded from environment variables
-  // and not exposed in client-side code
-  const EMAILJS_SERVICE_ID = 'service_mc1ruf6';
-  const EMAILJS_TEMPLATE_ID = 'template_ku692pa';
-  const EMAILJS_PUBLIC_KEY = 'eiQxZEm_9uv9OWC5f';
-  const RECIPIENT_EMAIL = 'collinwcollins@gmail.com';
+  // const EMAILJS_SERVICE_ID = 'service_mc1ruf6';
+  // const EMAILJS_TEMPLATE_ID = 'template_ku692pa';
+  const EMAILJS_SERVICE_ID = 'service_ncks22q';
+  const EMAILJS_TEMPLATE_ID = 'template_e7b4728';
+  const EMAILJS_PUBLIC_KEY = 'WlfbR2f-VQY0I7h9R';
+  const RECIPIENT_EMAIL = 'jg@aerogenconsulting.com';
   
   // Track content visibility
   let showContent = true;
