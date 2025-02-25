@@ -2,6 +2,9 @@
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   
+  // Check if the browser is Chrome
+  let isChrome = false;
+  
   // separate configurations for cursor and airplane contrails
   const CONFIG = {
     // core parameters
@@ -13,7 +16,7 @@
       emissionRate: 1,      // emit frequently for density
       particlesPerEmission: 2, // multiple particles per emission for ribbon effect
       particleSize: 3,      // base size of particles
-      blurAmount: 20,        // blur effect for smoother appearance
+      blurAmount: 2,        // blur effect for smoother appearance
       spreadFactor: 5       // spread factor for ribbon width
     },
     
@@ -22,7 +25,7 @@
       particleLife: 4000,   // longer lifespan for airplane contrails
       emissionRate: 20,     // emit more frequently for denser trails
       particleSize: 3,      // slightly larger particles
-      blurAmount: 5,        // more blur for smoke-like appearance
+      blurAmount: 2,        // more blur for smoke-like appearance
       fadeDelay: 0.6,       // start fading earlier
       spreadFactor: 1.5     // spread factor for contrail width
     },
@@ -50,6 +53,10 @@
   let animationId: number;
   let isPageVisible = true;
   let flybyInterval: number | null = null;
+  let lastFrameTime = 0; // Track last frame time for delta time calculation
+  
+  // Export isChrome for use in other components
+  export let disableCloudRotation = false;
   
   // define particle type with additional properties
   type Particle = {
@@ -121,7 +128,7 @@
   
   // create a new airplane that will fly across the screen
   function createAirplane() {
-    if (!browser || !container) return;
+    if (!browser || !container) return; // Allow airplanes in Chrome, just no contrails
     
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -188,6 +195,9 @@
     }
     
     const now = performance.now();
+    const deltaTime = now - (lastFrameTime || now);
+    lastFrameTime = now;
+    
     const width = canvas.width;
     const height = canvas.height;
     
@@ -201,8 +211,8 @@
       const dy = mouseY - lastMouseY;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // only create particles if the mouse is actually moving
-      if (distance > 1 && mouseX > 0 && mouseY > 0) {
+      // only create particles if the mouse is actually moving and not Chrome
+      if (!isChrome && distance > 1 && mouseX > 0 && mouseY > 0) {
         // create multiple particles per emission for ribbon effect
         for (let i = 0; i < CONFIG.cursor.particlesPerEmission; i++) {
           particles.push(createCursorParticle(mouseX, mouseY));
@@ -219,7 +229,7 @@
     // update and draw particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.age += 16; // approximate time between frames
+      p.age += deltaTime; // use actual time between frames
       
       // remove old particles
       if (p.age > p.maxLife) {
@@ -306,8 +316,8 @@
       // update airplane position
       airplane.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotation}deg)`;
       
-      // create contrail particles at regular intervals
-      if (now - lastEmitTime > CONFIG.airplane.emissionRate) {
+      // create contrail particles at regular intervals - only if not Chrome
+      if (!isChrome && now - lastEmitTime > CONFIG.airplane.emissionRate) {
         // calculate contrail position (behind the airplane)
         const radians = rotation * (Math.PI / 180);
         
@@ -351,6 +361,12 @@
   onMount(() => {
     if (!browser) return;
     
+    // Detect Chrome browser
+    isChrome = navigator.userAgent.indexOf("Chrome") > -1 && navigator.userAgent.indexOf("Safari") > -1;
+    
+    // Set the disableCloudRotation flag based on browser
+    disableCloudRotation = isChrome;
+    
     // create canvas
     canvas = document.createElement('canvas');
     canvas.width = window.innerWidth;
@@ -368,6 +384,7 @@
     container.appendChild(canvas);
     
     // start animation
+    lastFrameTime = performance.now();
     animationId = requestAnimationFrame(animate);
     
     // handle page visibility changes
@@ -434,5 +451,7 @@
   .contrail-container {
     overflow: visible;
     contain: layout;
+    transform: translateZ(0);
+    will-change: transform;
   }
 </style> 

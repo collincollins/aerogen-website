@@ -39,6 +39,9 @@
     topBoundary: 50  // Distance from top where clouds should not appear (in world units)
   };
   
+  // Detect Chrome browser to disable cloud rotation
+  let disableCloudRotation = false;
+  
   // Create a cloud using the original cloud generation logic
   const createCloud = () => {
     const group = new THREE.Group();
@@ -109,7 +112,7 @@
     });
 
     // Assign random rotation speed - keeps slow enough to not strain CPU
-    group.userData.rotationSpeed = 0.00005 + Math.random() * 0.005;
+    group.userData.rotationSpeed = 0.00005 + Math.random() * 0.0005;
     
     return group;
   };
@@ -281,28 +284,33 @@
       // Apply parallax based on section position
       cloud.position.x = cloud.userData.baseX - (currentPosition * cloud.userData.parallaxFactor);
       
-      // Apply gentle rotation
+      // Apply gentle rotation only if not Chrome
+      if (!disableCloudRotation) {
         cloud.rotation.y += cloud.userData.rotationSpeed;
-        
+      }
+      
       // Apply subtle oscillation to each sphere using original oscillation logic
-          cloud.children.forEach((object) => {
+      cloud.children.forEach((object) => {
         if (object.type === 'Mesh' && object.userData.originalY !== undefined) {
           const time = performance.now() * 0.001;
-            const userData = object.userData;
-            if (userData.oscillationSpeed) {
-              const oscillation = Math.sin(time * userData.oscillationSpeed + userData.oscillationOffset) * userData.oscillationAmplitude;
-              object.position.y = userData.originalY + oscillation;
-            }
+          const userData = object.userData;
+          if (userData.oscillationSpeed) {
+            const oscillation = Math.sin(time * userData.oscillationSpeed + userData.oscillationOffset) * userData.oscillationAmplitude;
+            object.position.y = userData.originalY + oscillation;
           }
-        });
+        }
       });
-      
+    });
+    
     // Render the scene
-      renderer.render(scene, camera);
+    renderer.render(scene, camera);
   };
 
   onMount(() => {
     if (!browser) return;
+    
+    // Detect Chrome browser
+    disableCloudRotation = navigator.userAgent.indexOf("Chrome") > -1 && navigator.userAgent.indexOf("Safari") > -1;
     
     // Initialize the scene
     initScene();
@@ -321,7 +329,7 @@
       isPageVisible = !document.hidden;
     };
     
-      document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     // Handle window resize
     const handleResize = () => {
@@ -347,7 +355,7 @@
     return () => {
       cancelAnimationFrame(frameId);
       unsubscribe();
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
       renderer?.dispose();
       if (container && renderer.domElement) {
