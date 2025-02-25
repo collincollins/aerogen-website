@@ -10,8 +10,4 @@
   targetPort = 5173
   port = 8888
   
-# Set up redirects for SPA navigation
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200 
+/*    /index.html   200
