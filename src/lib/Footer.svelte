@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { fun_mode } from './stores/navigation';
+  
   // social media links excluding instagram
   const socialLinks = [
     {
@@ -18,6 +20,17 @@
            </svg>`
     }
   ];
+  
+  // Toggle fun_mode
+  const toggleFunMode = () => {
+    fun_mode.update(value => !value);
+  };
+  
+  // Subscribe to fun_mode to get current value
+  let funModeEnabled = true;
+  fun_mode.subscribe(value => {
+    funModeEnabled = value;
+  });
 </script>
 
 <footer class="py-8 mt-8">
@@ -40,6 +53,19 @@
               {@html link.svg}
             </a>
           {/each}
+          
+          <!-- Fun Mode Toggle -->
+          <!-- <button 
+            on:click={toggleFunMode}
+            on:keydown={(e) => e.key === 'Enter' && toggleFunMode()}
+            tabindex="0"
+            aria-label={funModeEnabled ? "Disable visual effects" : "Enable visual effects"}
+            class="p-1 rounded-md hover:bg-white/10 transition-colors flex items-center"
+          >
+            <svg class="h-6 w-6" fill="none" stroke={funModeEnabled ? "#5EB3F9" : "#1D49A7"} viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+            </svg>
+          </button> -->
         </div>
         <p class="text-sm text-primary-dark font-aileron font-light">&copy; {new Date().getFullYear()} Aerogen Inc. All rights reserved.</p>
       </div>

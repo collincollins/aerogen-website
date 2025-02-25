@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as THREE from 'three';
-  import { currentSection } from './stores/navigation';
+  import { currentSection, fun_mode } from './stores/navigation';
   import { browser } from '$app/environment';
   
   let container: HTMLDivElement;
@@ -11,6 +11,7 @@
   let clouds: THREE.Group[] = [];
   let frameId: number;
   let isPageVisible = true;
+  let funModeEnabled = true; // Track fun_mode status
   
   // Track the current section for smooth transitions
   let currentSectionValue = 'main';
@@ -164,6 +165,11 @@
   
   // Set up the clouds in the scene
   const setupClouds = () => {
+    // Skip cloud creation if fun_mode is disabled
+    if (!funModeEnabled) {
+      return;
+    }
+    
     // Clear existing clouds
     clouds.forEach(cloud => scene.remove(cloud));
     clouds = [];
@@ -279,6 +285,13 @@
       currentPosition += positionDiff * 0.1;
     }
     
+    // Skip cloud updates if fun_mode is disabled
+    if (!funModeEnabled) {
+      // Just render the empty scene
+      renderer.render(scene, camera);
+      return;
+    }
+    
     // Update cloud positions with parallax effect
     clouds.forEach(cloud => {
       // Apply parallax based on section position
@@ -311,6 +324,23 @@
     
     // Detect Chrome browser
     disableCloudRotation = navigator.userAgent.indexOf("Chrome") > -1 && navigator.userAgent.indexOf("Safari") > -1;
+    
+    // Subscribe to fun_mode
+    const unsubscribeFunMode = fun_mode.subscribe(value => {
+      funModeEnabled = value;
+      
+      // If we have an initialized scene, update it based on fun_mode
+      if (scene) {
+        if (!funModeEnabled) {
+          // Remove all clouds when fun_mode is turned off
+          clouds.forEach(cloud => scene.remove(cloud));
+          clouds = [];
+        } else {
+          // Recreate clouds when fun_mode is turned on
+          setupClouds();
+        }
+      }
+    });
     
     // Initialize the scene
     initScene();
@@ -355,6 +385,7 @@
     return () => {
       cancelAnimationFrame(frameId);
       unsubscribe();
+      unsubscribeFunMode();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
       renderer?.dispose();
