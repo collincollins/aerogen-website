@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Social media links excluding Instagram
+  // social media links excluding instagram
   const socialLinks = [
     {
       name: 'X',
@@ -23,7 +23,7 @@
 <footer class="py-8 mt-8">
   <div class="w-full max-w-lg mx-auto p-4 relative">
 
-    <!-- Glass card -->
+    <!-- glass card -->
     <div class="glass-panel w-full h-full p-6 relative overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
       

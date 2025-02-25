@@ -12,23 +12,30 @@
   import emailjs from '@emailjs/browser';
   
   // Import DevTools only in development mode
-  import { browser } from "$app/environment";
+  import { browser, dev } from "$app/environment";
   import DevTools from "$lib/DevTools.svelte";
   import ContrailCursor from "$lib/ContrailCursor.svelte";
   
   // Flag to control DevTools visibility (set to false for production)
-  const showDevTools = browser && import.meta.env.DEV;
+  const showDevTools = browser && dev;
   
-  // EmailJS configuration - in a real app, these would be environment variables
+  // EmailJS configuration - these should be environment variables in production
+  // In a real production app, these would be loaded from environment variables
+  // and not exposed in client-side code
   const EMAILJS_SERVICE_ID = 'service_mc1ruf6';
-  const EMAILJS_TEMPLATE_ID = 'template_ku692pa'; // Updated with correct template ID
+  const EMAILJS_TEMPLATE_ID = 'template_ku692pa';
   const EMAILJS_PUBLIC_KEY = 'eiQxZEm_9uv9OWC5f';
   const RECIPIENT_EMAIL = 'collinwcollins@gmail.com';
   
   // Track content visibility
   let showContent = true;
   showContentToggle.subscribe(value => {
-    showContent = value;
+    // Only allow toggling content in development mode
+    if (dev) {
+      showContent = value;
+    } else {
+      showContent = true; // Always show content in production
+    }
   });
   
   // Form data
@@ -49,7 +56,7 @@
     }
     
     // Ensure content is always visible in production
-    if (!import.meta.env.DEV) {
+    if (!dev) {
       showContentToggle.set(true);
     }
   });
@@ -109,7 +116,9 @@
         submitSuccess = false;
       }, 3000);
     } catch (error) {
-      console.error("Error sending email:", error);
+      if (dev) {
+        console.error("Error sending email:", error);
+      }
       isSubmitting = false;
       submitError = error instanceof Error ? error.message : 'Failed to send email';
       
@@ -146,11 +155,11 @@
         <!-- Main card -->
         <GlassCard width="w-full max-w-2xl">
           <div class="flex flex-col items-center text-center">
-            <p class="text-primary-dark text-xl leading-relaxed mb-6">
+            <p class="text-primary-dark text-xl leading-relaxed mb-6 font-aileron font-light">
               Aviation consulting with decades of operational expertise
             </p>
             <hr class="w-24 border-primary/90 mb-6" />
-            <p class="text-primary-dark leading-relaxed">
+            <p class="text-primary-dark leading-relaxed font-aileron">
               From airline operations to strategic growth, we bring executive-level experience 
               from leading airlines to help your aviation business reach new heights.
             </p>
@@ -166,19 +175,19 @@
             
             <div>
               <h3 class="text-2xl font-light text-primary-dark font-aileron mb-[-2px]">About the Founder</h3>
-              <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left">John Greif IV</p>
+              <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left font-light">John Greif IV</p>
               
-              <p class="text-primary-dark leading-relaxed mb-4">
+              <p class="text-primary-dark leading-relaxed mb-4 font-aileron">
                 I've been part of aviation since childhood. My father founded Tropic Air in Belize in 1979, which grew to become the country's largest airline. Growing up in this environment, I learned the aviation business from every angle.
               </p>
             </div>
           </div>
           
-          <p class="text-primary-dark leading-relaxed mb-4">
+          <p class="text-primary-dark leading-relaxed mb-4 font-aileron">
             My path led to the U.S. Air Force where I flew C-17 aircraft, followed by over 20 years in airline leadership. During this time, I managed operations at Tropic Air and Southern Airways Express, helping the former develop into the largest airline in Belize and the latter develop into the largest commuter airline in the United States.
           </p>
           
-          <p class="text-primary-dark leading-relaxed">
+          <p class="text-primary-dark leading-relaxed font-aileron">
             These experiences in operational leadership, team building, and strategic expansion now inform my work at Aerogen Inc., where we provide specialized aviation consulting services.
           </p>
         </GlassCard>
@@ -269,7 +278,7 @@
   <Footer />
 </div>
 
-<!-- Developer tools -->
+<!-- Developer tools - only shown in development mode -->
 {#if showDevTools}
   <DevTools />
 {/if} 

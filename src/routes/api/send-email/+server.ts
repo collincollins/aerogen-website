@@ -1,10 +1,11 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import emailjs from '@emailjs/browser';
+import { dev } from '$app/environment';
 
-// EmailJS configuration - in a real app, these would be environment variables
+// emailjs configuration - in a real app, these would be environment variables
 const EMAILJS_SERVICE_ID = 'service_mc1ruf6';
-const EMAILJS_TEMPLATE_ID = 'template_ku692pa'; // Updated with correct template ID
+const EMAILJS_TEMPLATE_ID = 'template_ku692pa';
 const EMAILJS_PUBLIC_KEY = 'eiQxZEm_9uv9OWC5f';
 const RECIPIENT_EMAIL = 'collinwcollins@gmail.com';
 
@@ -12,12 +13,12 @@ export const POST = (async ({ request }) => {
   try {
     const { name, email, message } = await request.json();
     
-    // Validate form data
+    // validate form data
     if (!name || !email || !message) {
       return json({ success: false, error: 'All fields are required' }, { status: 400 });
     }
     
-    // Prepare template parameters for EmailJS
+    // prepare template parameters for emailjs
     const templateParams = {
       name: name,
       email: email,
@@ -27,24 +28,28 @@ export const POST = (async ({ request }) => {
       subject: `Consulting inquiry from ${name}`
     };
     
-    // Log the email submission (for debugging)
-    console.log('Email submission received:');
-    console.log('To:', RECIPIENT_EMAIL);
-    console.log('From:', email);
-    console.log('Name:', name);
-    console.log('Message:', message);
+    // only log in development mode
+    if (dev) {
+      console.log('email submission received:');
+      console.log('to:', RECIPIENT_EMAIL);
+      console.log('from:', email);
+      console.log('name:', name);
+      console.log('message:', message);
+    }
     
     try {
-      // In development or without API keys, we'll just log it
+      // in development or without api keys, we'll just log it
       if (!EMAILJS_PUBLIC_KEY) {
-        console.log('EmailJS configuration not complete - email would be sent with params:', templateParams);
+        if (dev) {
+          console.log('emailjs configuration not complete - email would be sent with params:', templateParams);
+        }
       } else {
-        // Initialize EmailJS with public key
+        // initialize emailjs with public key
         emailjs.init({
           publicKey: EMAILJS_PUBLIC_KEY
         });
         
-        // Send the email
+        // send the email
         await emailjs.send(
           EMAILJS_SERVICE_ID,
           EMAILJS_TEMPLATE_ID,
@@ -52,20 +57,34 @@ export const POST = (async ({ request }) => {
           EMAILJS_PUBLIC_KEY
         );
         
-        console.log('Email sent successfully!');
+        if (dev) {
+          console.log('email sent successfully!');
+        }
       }
       
-      // Return success response
+      // return success response
       return json({ success: true });
     } catch (emailError) {
-      console.error('Error sending email via EmailJS:', emailError);
+      // always log errors, but with less detail in production
+      if (dev) {
+        console.error('error sending email via emailjs:', emailError);
+      } else {
+        console.error('email sending error occurred');
+      }
+      
       return json({ 
         success: false, 
         error: 'Failed to send email through service' 
       }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error processing email submission:', error);
+    // always log errors, but with less detail in production
+    if (dev) {
+      console.error('error processing email submission:', error);
+    } else {
+      console.error('email processing error occurred');
+    }
+    
     return json({ 
       success: false, 
       error: 'Failed to process email request' 

@@ -3,6 +3,7 @@
   import * as THREE from 'three';
   import { currentSection } from './stores/navigation';
   import { showContentToggle, showExclusionZones } from './stores/devTools';
+  import { browser, dev } from '$app/environment';
   
   let container: HTMLDivElement;
   let scene: THREE.Scene;
@@ -11,19 +12,20 @@
   let clouds: THREE.Group[] = [];
   let frameId: number;
   let lastRenderTime = 0;
-  const targetFPS = 30; // Limit to 30 FPS to reduce CPU/GPU load
+  const targetFPS = 30; // limit to 30 FPS to reduce CPU/GPU load
   const frameInterval = 1000 / targetFPS;
   let isVisible = true;
+  let isPageVisible = true; // track page visibility
   let exclusionZoneObjects: THREE.Group[] = [];
 
-  // Define all available sections
+  // define all available sections
   const sections = {
     main: { position: 0 },
     contact: { position: 100 },
     work: { position: 200 }
   };
 
-  // Type for cloud positions
+  // type for cloud positions
   type CloudPosition = {
     x: number;
     y: number;
@@ -31,7 +33,7 @@
     scale: number;
   };
 
-  // Define no-cloud zones for navigation elements
+  // define no-cloud zones for navigation elements
   type ExclusionZone = {
     x: number;
     y: number;
@@ -39,10 +41,10 @@
     height: number;
   };
 
-  // Settings for collision detection
-  const MIN_CLOUD_DISTANCE_FACTOR = 2.2; // Increased from 1.8 to account for denser clouds
+  // settings for collision detection
+  const MIN_CLOUD_DISTANCE_FACTOR = 2.2; // increased from 1.8 for denser clouds
 
-  // Store initial cloud positions to ensure persistence across resizes
+  // store initial cloud positions to ensure persistence across resizes
   let initialCloudSetupComplete = false;
   let previousViewportWidth = 0;
   let previousViewportHeight = 0;
@@ -50,7 +52,7 @@
   const createCloud = () => {
     const group = new THREE.Group();
     
-    // Restore original cloud appearance but keep optimized geometry
+    // restore original cloud appearance but keep optimized geometry
     const sphereGeometry = new THREE.SphereGeometry(4, 16, 16);
     const material = new THREE.MeshPhysicalMaterial({
       color: 0xFFFFFF,
@@ -64,15 +66,15 @@
       opacity: 0.95,
     });
 
-    // Restore denser sphere formation from navbar version for better visual appearance
+    // restore denser sphere formation from navbar version for better visual appearance
     const positions = [];
     const radius = 10;
     const layers = 3;
     
-    // Use original denser cloud layout
+    // use original denser cloud layout
     for (let layer = 0; layer < layers; layer++) {
       const layerRadius = radius - (layer * 2);
-      // Restore original sphere count per layer for denser appearance
+      // restore original sphere count per layer for denser appearance
       const numSpheresInLayer = Math.floor(12 * (1 - layer * 0.2));
       
       for (let i = 0; i < numSpheresInLayer; i++) {
@@ -85,7 +87,7 @@
       }
     }
     
-    // Add additional spheres for the center area to make clouds appear fuller
+    // add additional spheres for the center area to make clouds appear fuller
     for (let i = 0; i < 6; i++) {
       positions.push({
         x: (Math.random() - 0.5) * 5,
@@ -100,27 +102,27 @@
       sphere.position.y = pos.y + (Math.random() - 0.5) * 2;
       sphere.position.z = pos.z + (Math.random() - 0.5) * 2;
       
-      // Add subtle vertical oscillation to each sphere
-      sphere.userData.oscillationSpeed = 0.0005 + Math.random() * 0.05; // Reduced for performance
+      // add subtle vertical oscillation to each sphere
+      sphere.userData.oscillationSpeed = 0.0005 + Math.random() * 0.05; // reduced for performance
       sphere.userData.oscillationOffset = Math.random() * Math.PI * 2;
       sphere.userData.oscillationAmplitude = 0.1 + Math.random() * 0.2;
       
       group.add(sphere);
     });
 
-    // Assign random rotation speed - keeps slow enough to not strain CPU
+    // assign random rotation speed - keeps slow enough to not strain CPU
     group.userData.rotationSpeed = 0.00005 + Math.random() * 0.005;
     
     return group;
   };
 
-  // Check if a cloud is in view
+  // check if a cloud is in view
   const isInView = (position: THREE.Vector3, distance: number = 350): boolean => {
     const frustumSize = 300;
     const aspect = window.innerWidth / window.innerHeight;
     const viewWidth = frustumSize * aspect;
     
-    // Simple frustum culling
+    // simple frustum culling
     return (
       position.x > camera.position.x - viewWidth/2 - distance &&
       position.x < camera.position.x + viewWidth/2 + distance &&
@@ -129,18 +131,18 @@
     );
   };
 
-  // Check if a position is within any exclusion zone
+  // check if a position is within any exclusion zone
   const isInExclusionZone = (
     position: CloudPosition, 
     exclusionZones: ExclusionZone[], 
     cloudScale: number
   ): boolean => {
-    // Calculate cloud radius based on scale - increase radius for better coverage
-    const cloudRadius = cloudScale * 10; // Increased from 10 to 12 for better coverage
+    // calculate cloud radius based on scale for better coverage
+    const cloudRadius = cloudScale * 10;
     
     for (const zone of exclusionZones) {
-      // Check if any part of the cloud overlaps with the exclusion zone
-      // Use a more sensitive collision check with expanded cloud radius
+      // check if any part of the cloud overlaps with the exclusion zone
+      // use a more sensitive collision check with expanded cloud radius
       if (
         position.x + cloudRadius > zone.x - cloudRadius * 0.5 &&
         position.x - cloudRadius < zone.x + zone.width + cloudRadius * 0.5 &&
@@ -153,25 +155,25 @@
     return false;
   };
 
-  // Check if a new cloud position would overlap with existing clouds
+  // check if a new cloud position would overlap with existing clouds
   const wouldOverlap = (
     newPos: CloudPosition, 
     existingPositions: CloudPosition[],
     exclusionZones: ExclusionZone[] = []
   ): boolean => {
-    // First check if the position is in an exclusion zone
+    // first check if the position is in an exclusion zone
     if (isInExclusionZone(newPos, exclusionZones, newPos.scale)) {
       return true;
     }
     
-    // Then check overlaps with existing clouds
+    // then check overlaps with existing clouds
     for (const pos of existingPositions) {
       const dx = newPos.x - pos.x;
       const dy = newPos.y - pos.y;
       const dz = newPos.z - pos.z;
       const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
       
-      // Calculate minimum distance based on the scales of both clouds
+      // calculate minimum distance based on the scales of both clouds
       const minDistance = (newPos.scale + pos.scale) * 10 * MIN_CLOUD_DISTANCE_FACTOR;
       
       if (distance < minDistance) {
@@ -181,74 +183,74 @@
     return false;
   };
 
-  // Generate a valid cloud position that doesn't overlap with existing clouds
+  // generate a valid cloud position that doesn't overlap with existing clouds
   const generateNonOverlappingPosition = (
     layer: { z: number, minScale: number, maxScale: number },
     bounds: { minX: number, maxX: number, minY: number, maxY: number },
     existingPositions: CloudPosition[],
     exclusionZones: ExclusionZone[] = []
   ): CloudPosition => {
-    // Maximum attempts to find a non-overlapping position
-    const MAX_ATTEMPTS = 100; // Increased from 50 to 100
+    // maximum attempts to find a non-overlapping position
+    const MAX_ATTEMPTS = 100;
     
-    // Top half of the screen has exclusion zones, so start with trying bottom half
+    // top half of the screen has exclusion zones, so start with trying bottom half
     for (let attempt = 0; attempt < MAX_ATTEMPTS/2; attempt++) {
-      // Try bottom 60% of the screen first
+      // try bottom 60% of the screen first
       const x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
       const y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY) * 0.85;
       
-      // Randomize scale between min and max
+      // randomize scale between min and max
       const scaleFactor = Math.random();
       const scale = layer.minScale + (layer.maxScale - layer.minScale) * scaleFactor;
       
       const newPos = { x, y, z: layer.z, scale };
       
-      // Double check against exclusion zones with a safety factor
+      // double check against exclusion zones with a safety factor
       if (!isInExclusionZone(newPos, exclusionZones, newPos.scale * 1.0) && 
           !wouldOverlap(newPos, existingPositions)) {
         return newPos;
       }
     }
     
-    // If bottom half didn't work, try entire viewport but with more caution around exclusion zones
+    // if bottom half didn't work, try entire viewport but with more caution around exclusion zones
     for (let attempt = 0; attempt < MAX_ATTEMPTS/2; attempt++) {
       const x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
       const y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
       
-      // Use smaller cloud scale to increase chances of fitting
+      // use smaller cloud scale to increase chances of fitting
       const scale = layer.minScale + (layer.maxScale - layer.minScale) * 0.5; 
       
       const newPos = { x, y, z: layer.z, scale };
       
-      // Double check exclusion zones with an even larger safety margin
+      // double check exclusion zones with an even larger safety margin
       if (!isInExclusionZone(newPos, exclusionZones, newPos.scale * 1) &&
           !wouldOverlap(newPos, existingPositions)) {
         return newPos;
       }
     }
     
-    // Last resort: place clouds very far from exclusion zones, in the bottom area
+    // last resort: place clouds very far from exclusion zones, in the bottom area
     const x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
     const y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY) * 0.3; // bottom 30%
-    const scale = layer.minScale; // Use minimum scale
+    const scale = layer.minScale; // use minimum scale
     
     return { x, y, z: layer.z, scale };
   };
 
-  // Function to visualize exclusion zones
+  // function to visualize exclusion zones
   const updateExclusionZoneVisibility = (exclusionZones: ExclusionZone[]) => {
-    // Remove existing visualization objects
+    // remove existing visualization objects
     exclusionZoneObjects.forEach(obj => {
       scene.remove(obj);
     });
     exclusionZoneObjects = [];
     
-    // If visualization is not enabled, just return
+    // if visualization is not enabled, just return
     if (!$showExclusionZones) return;
     
-    // Create visualization for each exclusion zone
+    // create visualization for each exclusion zone
     exclusionZones.forEach((zone, index) => {
-      let zoneName = "Exclusion Zone"; // Default value
+      let zoneName = "Exclusion Zone"; // default value
       if (index === 0) {
         zoneName = "Logo Cloud Zone";
       } else if (index === 1) {
@@ -257,10 +259,10 @@
         zoneName = "Title Zone";
       }
       
-      // Create a group for this zone visualization
+      // create a group for this zone visualization
       const zoneGroup = new THREE.Group();
       
-      // Create a wireframe box for the zone boundary
+      // create a wireframe box for the zone boundary
       const wireframeGeometry = new THREE.BoxGeometry(zone.width, zone.height, 50);
       const wireframeMaterial = new THREE.MeshBasicMaterial({
         color: index === 0 ? 0x5FB3F9 : (index === 1 ? 0x1D49A7 : 0xFFFFFF), // Different colors for each zone
@@ -274,10 +276,10 @@
       wireframeMesh.position.set(zone.x + zone.width/2, zone.y - zone.height/2, 0);
       zoneGroup.add(wireframeMesh);
       
-      // Add a semi-transparent fill
+      // add a semi-transparent fill
       const fillGeometry = new THREE.BoxGeometry(zone.width - 2, zone.height - 2, 45);
       const fillMaterial = new THREE.MeshBasicMaterial({
-        color: index === 0 ? 0x5FB3F9 : (index === 1 ? 0x1D49A7 : 0xFFFFFF), // Different colors for each zone
+        color: index === 0 ? 0x5FB3F9 : (index === 1 ? 0x1D49A7 : 0xFFFFFF), // different colors for each zone
         transparent: true,
         opacity: 0.1
       });
@@ -286,7 +288,7 @@
       fillMesh.position.copy(wireframeMesh.position);
       zoneGroup.add(fillMesh);
       
-      // Add a label that moves with the zone
+      // add a label that moves with the zone
       const labelCanvas = document.createElement('canvas');
       const context = labelCanvas.getContext('2d');
       if (context) {
@@ -309,13 +311,13 @@
         const label = new THREE.Mesh(labelGeometry, labelMaterial);
         label.position.set(
           zone.x + zone.width/2,
-          zone.y - zone.height - 15, // Position below the zone
+          zone.y - zone.height - 15, // position below the zone
           0
         );
         zoneGroup.add(label);
       }
       
-      // Add a dashed line to show margin - consistent for all zones
+      // add a dashed line to show margin - consistent for all zones
       const marginGeometry = new THREE.EdgesGeometry(wireframeGeometry);
       const marginMaterial = new THREE.LineDashedMaterial({
         color: 0xFFFFFF,
@@ -327,31 +329,31 @@
       
       const marginLines = new THREE.LineSegments(marginGeometry, marginMaterial);
       marginLines.position.copy(wireframeMesh.position);
-      marginLines.computeLineDistances(); // Needed for dashed lines
+      marginLines.computeLineDistances(); // needed for dashed lines
       zoneGroup.add(marginLines);
       
-      // Add the group to the scene
+      // add the group to the scene
       scene.add(zoneGroup);
       exclusionZoneObjects.push(zoneGroup);
     });
   };
 
   const setupClouds = (isResize = false) => {
-    // Get current window dimensions
+    // get current window dimensions
     const width = window.innerWidth;
     const height = window.innerHeight;
     
-    // Calculate viewport bounds in world space
+    // calculate viewport bounds in world space
     const frustumSize = 300;
     const aspect = width / height;
     const viewportWidth = frustumSize * aspect;
     const viewportHeight = frustumSize;
     
-    // Calculate total content width based on the number of sections
+    // calculate total content width based on the number of sections
     const numSections = Object.keys(sections).length;
     const worldSpaceWidth = viewportWidth * numSections;
     
-    // Define the bounds for cloud placement
+    // define the bounds for cloud placement
     const bounds = {
       minX: -worldSpaceWidth / 2,
       maxX: worldSpaceWidth / 2,
@@ -359,17 +361,17 @@
       maxY: viewportHeight / 2
     };
     
-    // Define exclusion zones for navigation buttons based on actual Navbar positioning
-    // Size is relative to the viewport size
-    const isLargeScreen = width >= 768; // Match the media query in Navbar
+    // define exclusion zones for navigation buttons based on actual Navbar positioning
+    // size is relative to the viewport size
+    const isLargeScreen = width >= 768; // match the media query in Navbar
     
-    // Logo cloud sizing (from Navbar) - increase sizes by 15% for better coverage
-    const logoSize = isLargeScreen ? viewportHeight * 0.25 : viewportHeight * 0.20; // Increased size
-    const logoOffsetX = -viewportWidth / 2; // Ensure it's at the edge
+    // logo cloud sizing (from Navbar) - increase sizes by 15% for better coverage
+    const logoSize = isLargeScreen ? viewportHeight * 0.25 : viewportHeight * 0.20; // increased size
+    const logoOffsetX = -viewportWidth / 2; // ensure it's at the edge
     const logoOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.07 : viewportHeight * 0.06);
     
-    // Contact cloud sizing (from Navbar) - increase sizes by 15% for better coverage
-    const contactSize = isLargeScreen ? viewportHeight * 0.21 : viewportHeight * 0.17; // Increased size
+    // contact cloud sizing (from Navbar) - increase sizes by 15% for better coverage
+    const contactSize = isLargeScreen ? viewportHeight * 0.21 : viewportHeight * 0.17; // increased size
     const contactOffsetX = viewportWidth / 2 - (isLargeScreen ? viewportHeight * 0.06 : viewportHeight * 0.04);
     const contactOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.03 : viewportHeight * 0.04);
     
@@ -377,41 +379,41 @@
     const titleWidth = isLargeScreen ? viewportWidth * 0.3 : viewportWidth * 0.5; // 30% of viewport width on desktop, 50% on mobile
     const titleHeight = viewportHeight * 0.08; // 8% of viewport height
     
-    // Extra margin around the clouds to ensure no clouds overlap with navigation - increased margin
-    const margin = viewportHeight * 0.06; // Increased from 0.04 to 0.06
+    // extra margin around the clouds to ensure no clouds overlap with navigation - increased margin
+    const margin = viewportHeight * 0.06; // increased from 0.04 to 0.06
     
     const exclusionZones: ExclusionZone[] = [
-      // Logo zone (upper left)
+      // logo zone (upper left)
       {
         x: logoOffsetX - margin,
         y: logoOffsetY + logoSize + margin,
-        width: logoSize + margin * 2.5, // Increased horizontal coverage
+        width: logoSize + margin * 2.5, // increased horizontal coverage
         height: logoSize + margin * 2
       },
-      // Question mark zone (upper right)
+      // question mark zone (upper right)
       {
-        x: contactOffsetX - contactSize - margin * 1.5, // Increased leftward coverage
+        x: contactOffsetX - contactSize - margin * 1.5, // increased leftward coverage
         y: contactOffsetY + contactSize + margin,
-        width: contactSize + margin * 2.5, // Increased horizontal coverage
+        width: contactSize + margin * 2.5, // increased horizontal coverage
         height: contactSize + margin * 2
       },
-      // Aerogen title zone (top center)
+      // aerogen title zone (top center)
       {
         x: -titleWidth / 2,
-        y: viewportHeight / 2, // At the top of the viewport
+        y: viewportHeight / 2, // at the top of the viewport
         width: titleWidth,
-        height: titleHeight + margin * 2 // Add margin for safety
+        height: titleHeight + margin * 2 // add margin for safety
       }
     ];
     
-    // Visualize exclusion zones if enabled
+    // visualize exclusion zones if enabled
     updateExclusionZoneVisibility(exclusionZones);
     
-    // Calculate cloud density - fewer total clouds since each is now denser
+    // calculate cloud density - fewer total clouds since each is now denser
     const cloudsPerViewport = 30;
     const targetCloudCount = Math.min(45, Math.ceil(cloudsPerViewport * numSections));
     
-    // Force remove any clouds in exclusion zones regardless of resize status
+    // force remove any clouds in exclusion zones regardless of resize status
     const forceRemoveCloudsInExclusionZones = () => {
       clouds.forEach(cloud => {
         if (isInExclusionZone(
@@ -426,25 +428,25 @@
       clouds = clouds.filter(cloud => !cloud.userData.removeMe);
     };
     
-    // Check and remove clouds in exclusion zones first
+    // check and remove clouds in exclusion zones first
     if (initialCloudSetupComplete) {
       forceRemoveCloudsInExclusionZones();
     }
     
-    // Handle resize case - preserve existing clouds
+    // handle resize case - preserve existing clouds
     if (isResize && initialCloudSetupComplete) {
       const widthRatio = viewportWidth / previousViewportWidth;
       const heightRatio = viewportHeight / previousViewportHeight;
       
-      // Update positions of existing clouds
+      // update positions of existing clouds
       clouds.forEach(cloud => {
-        // Scale positions proportionally to the new viewport size
+        // scale positions proportionally to the new viewport size
         const newX = cloud.position.x * widthRatio;
         const newY = cloud.position.y * heightRatio;
         
-        // Check if cloud is still within bounds and not in exclusion zones
+        // check if cloud is still within bounds and not in exclusion zones
         if (
-          newX >= bounds.minX * 1.05 && // Add 10% margin
+          newX >= bounds.minX * 1.05 && // add 10% margin
           newX <= bounds.maxX * 1.05 &&
           newY >= bounds.minY * 1.05 &&
           newY <= bounds.maxY * 1.05 &&
@@ -454,13 +456,13 @@
             cloud.scale.x
           )
         ) {
-          // Keep this cloud and adjust its position
+          // keep this cloud and adjust its position
           cloud.position.set(newX, newY, cloud.position.z);
           cloud.userData.originalX = newX;
         } else {
-          // Cloud is now out of bounds or in exclusion zone - remove it
+          // cloud is now out of bounds or in exclusion zone - remove it
           scene.remove(cloud);
-          // Mark for removal from clouds array (we'll filter later)
+          // mark for removal from clouds array (we'll filter later)
           cloud.userData.removeMe = true;
         }
       });
@@ -470,17 +472,17 @@
       
       // Add more clouds if needed
       if (clouds.length < targetCloudCount) {
-        // Distribution across layers
+        // distribution across layers
         const layerDistribution = [
           { z: -150, count: Math.floor(targetCloudCount * 0.35), minScale: 1.8, maxScale: 2.2 },
           { z: -100, count: Math.floor(targetCloudCount * 0.35), minScale: 1.2, maxScale: 1.6 },
           { z: -50, count: Math.floor(targetCloudCount * 0.3), minScale: 0.6, maxScale: 1.0 }
         ];
         
-        // Create cloud positions for each layer
+        // create cloud positions for each layer
         const cloudPositions: CloudPosition[] = [];
         
-        // Extract existing cloud positions for overlap checking
+        // extract existing cloud positions for overlap checking
         const existingPositions: CloudPosition[] = clouds.map(cloud => ({
           x: cloud.position.x,
           y: cloud.position.y,
@@ -488,14 +490,14 @@
           scale: cloud.scale.x // assuming uniform scale
         }));
         
-        // Calculate how many clouds to add for each layer
+        // calculate how many clouds to add for each layer
         const currentCounts: Record<string, number> = {
           '-150': 0,
           '-100': 0,
           '-50': 0
         };
         
-        // Count existing clouds by layer
+        // count existing clouds by layer
         clouds.forEach(cloud => {
           const z = cloud.position.z.toString();
           if (currentCounts[z] !== undefined) {
@@ -503,7 +505,7 @@
           }
         });
         
-        // Add new clouds as needed
+        // add new clouds as needed
         layerDistribution.forEach(layer => {
           const z = layer.z.toString();
           const existingCount = currentCounts[z] || 0;
@@ -512,11 +514,11 @@
           for (let i = 0; i < neededCount; i++) {
             const position = generateNonOverlappingPosition(layer, bounds, existingPositions, exclusionZones);
             cloudPositions.push(position);
-            existingPositions.push(position); // Add to existing positions to prevent overlap
+            existingPositions.push(position); // add to existing positions to prevent overlap
           }
         });
         
-        // Create and add new clouds
+        // create and add new clouds
         cloudPositions.forEach(pos => {
           const cloud = createCloud();
           cloud.position.set(pos.x, pos.y, pos.z);
@@ -529,7 +531,7 @@
           scene.add(cloud);
           clouds.push(cloud);
           
-          // Store original Y positions for oscillation
+          // store original Y positions for oscillation
           cloud.children.forEach((object) => {
             if (object.type === 'Mesh') {
               object.userData.originalY = object.position.y;
@@ -537,16 +539,16 @@
           });
         });
       }
-      // If we have too many clouds, remove some
+      // if we have too many clouds, remove some
       else if (clouds.length > targetCloudCount) {
-        // Sort by distance from center (remove the furthest ones first)
+        // sort by distance from center (remove the furthest ones first)
         clouds.sort((a, b) => {
           const distA = Math.sqrt(a.position.x**2 + a.position.y**2);
           const distB = Math.sqrt(b.position.x**2 + b.position.y**2);
           return distB - distA;
         });
         
-        // Remove excess clouds
+        // remove excess clouds
         const excessCount = clouds.length - targetCloudCount;
         for (let i = 0; i < excessCount; i++) {
           const cloud = clouds.pop();
@@ -554,23 +556,23 @@
         }
       }
     }
-    // Initial setup or full regeneration if needed
+    // initial setup or full regeneration if needed
     else {
-      // Clear existing clouds if any
+      // clear existing clouds if any
       clouds.forEach(cloud => scene.remove(cloud));
       clouds = [];
       
-      // Distribution across layers
+      // distribution across layers
       const layerDistribution = [
         { z: -150, count: Math.floor(targetCloudCount * 0.35), minScale: 1.3, maxScale: 1.4 },
         { z: -100, count: Math.floor(targetCloudCount * 0.35), minScale: 0.8, maxScale: 1.2 },
         { z: -50, count: Math.floor(targetCloudCount * 0.3), minScale: 0.6, maxScale: 0.8 }
       ];
       
-      // Generate positions for all clouds
+      // generate positions for all clouds
       const cloudPositions: CloudPosition[] = [];
       
-      // Create positions for each layer
+      // create positions for each layer
       layerDistribution.forEach(layer => {
         for (let i = 0; i < layer.count; i++) {
           const position = generateNonOverlappingPosition(layer, bounds, cloudPositions, exclusionZones);
@@ -578,13 +580,13 @@
         }
       });
       
-      // Create clouds and add to scene
+      // create clouds and add to scene
       cloudPositions.forEach(pos => {
         const cloud = createCloud();
         cloud.position.set(pos.x, pos.y, pos.z);
         cloud.scale.setScalar(pos.scale);
         
-        // Set initial rotation to face forward
+        // set initial rotation to face forward
         cloud.rotation.set(0, 0, 0);
         
         const normalizedDist = Math.abs(pos.z) / 900;
@@ -597,11 +599,11 @@
       initialCloudSetupComplete = true;
     }
     
-    // Store current viewport dimensions for next resize
+    // store current viewport dimensions for next resize
     previousViewportWidth = viewportWidth;
     previousViewportHeight = viewportHeight;
     
-    // Ensure original Y positions are stored for oscillation
+    // ensure original Y positions are stored for oscillation
     clouds.forEach(cloud => {
       if (!cloud.userData.hasStoredPositions) {
         cloud.children.forEach((object) => {
@@ -617,7 +619,7 @@
   const initScene = () => {
     scene = new THREE.Scene();
     
-    // Set up orthographic camera for consistent viewing angle
+    // set up orthographic camera for consistent viewing angle
     const aspect = window.innerWidth / window.innerHeight;
     const frustumSize = 300;
     camera = new THREE.OrthographicCamera(
@@ -647,7 +649,7 @@
     
     container.appendChild(renderer.domElement);
 
-    // Use exact same lighting as navbar but optimize
+    // use exact same lighting as navbar but optimize
     const ambientLight = new THREE.AmbientLight(0xFFFFFF, 2.0);
     scene.add(ambientLight);
     
@@ -657,7 +659,7 @@
     scene.add(directionalLight);
     scene.add(directionalLight.target);
     
-    // Create clouds dynamically based on viewport size
+    // create clouds dynamically based on viewport size
     setupClouds();
   };
 
@@ -668,7 +670,10 @@
   const animate = (timestamp: number) => {
     frameId = requestAnimationFrame(animate);
     
-    // Frame rate limiter
+    // skip animation when tab is not visible
+    if (!isPageVisible) return;
+    
+    // frame rate limiter
     const elapsed = timestamp - lastRenderTime;
     if (elapsed < frameInterval && isVisible) return;
     
@@ -679,22 +684,22 @@
     
     let needsRender = false;
     
-    // Ensure rendering when exclusion zones are toggled
+    // ensure rendering when exclusion zones are toggled
     if ($showExclusionZones && exclusionZoneObjects.length > 0) {
       needsRender = true;
     }
     
     clouds.forEach(cloud => {
-      // Only process visible clouds
+      // only process visible clouds
       if (!isInView(cloud.position)) return;
       
       needsRender = true;
       
-      // Apply individual rotation around Y axis only
+      // apply individual rotation around Y axis only
       cloud.rotation.y += cloud.userData.rotationSpeed;
       
-      // Apply subtle vertical oscillation to each sphere in the cloud
-      // Only if the cloud is close enough to be visible
+      // apply subtle vertical oscillation to each sphere in the cloud
+      // only if the cloud is close enough to be visible
       cloud.children.forEach((object) => {
         if (object.type === 'Mesh' && object.userData.oscillationSpeed) {
           const oscillation = Math.sin(time * object.userData.oscillationSpeed + object.userData.oscillationOffset) * object.userData.oscillationAmplitude;
@@ -702,14 +707,14 @@
         }
       });
       
-      // Calculate eased parallax movement
+      // calculate eased parallax movement
       const targetX = cloud.userData.originalX - (baseOffset * cloud.userData.parallaxSpeed);
       const currentX = cloud.position.x;
       const easedX = currentX + (targetX - currentX) * 0.1;
       cloud.position.x = easedX;
     });
 
-    // Only render when necessary
+    // only render when necessary
     if (needsRender || !isVisible) {
       renderer.render(scene, camera);
     }
@@ -718,7 +723,7 @@
   onMount(() => {
     initScene();
     
-    // Get current dimensions to calculate exclusion zones
+    // get current dimensions to calculate exclusion zones
     const width = window.innerWidth;
     const height = window.innerHeight;
     const frustumSize = 300;
@@ -726,7 +731,7 @@
     const viewportWidth = frustumSize * aspect;
     const viewportHeight = frustumSize;
     
-    // Define exclusion zones for immediate cleanup
+    // define exclusion zones for immediate cleanup
     const isLargeScreen = width >= 768;
     const logoSize = isLargeScreen ? viewportHeight * 0.25 : viewportHeight * 0.20;
     const contactSize = isLargeScreen ? viewportHeight * 0.21 : viewportHeight * 0.17;
@@ -754,7 +759,7 @@
       }
     ];
     
-    // Immediate cleanup of any clouds in exclusion zones
+    // immediate cleanup of any clouds in exclusion zones
     const removeCloudsInExclusionZones = () => {
       const cloudsToRemove: THREE.Group[] = [];
       
@@ -777,11 +782,11 @@
       });
     };
     
-    // Check all clouds' original positions
+    // check all clouds' original positions
     clouds.forEach(cloud => {
       cloud.userData.originalX = cloud.position.x;
       
-      // Store original Y positions for oscillation
+      // store original Y positions for oscillation
       cloud.children.forEach((object) => {
         if (object.type === 'Mesh') {
           object.userData.originalY = object.position.y;
@@ -790,25 +795,40 @@
       cloud.userData.hasStoredPositions = true;
     });
     
-    // Run cleanup immediately
+    // run cleanup immediately
     removeCloudsInExclusionZones();
     
-    // Then run a second check to ensure all remaining clouds are valid
-    // This is important as sometimes clouds might have moved due to resize
+    // then run a second check to ensure all remaining clouds are valid
+    // this is important as sometimes clouds might have moved due to resize
     setTimeout(removeCloudsInExclusionZones, 500);
     
-    // Subscribe to the visibility toggle
+    // subscribe to the visibility toggle
     const unsubscribeContent = showContentToggle.subscribe(value => {
-      isVisible = !value; // When content is hidden, background becomes more important
+      isVisible = !value; // when content is hidden, background becomes more important
     });
     
-    // Subscribe to the exclusion zones toggle
+    // subscribe to the exclusion zones toggle
     const unsubscribeExclusionZones = showExclusionZones.subscribe(value => {
-      // When this changes, update the visualization by calling setupClouds
+      // when this changes, update the visualization by calling setupClouds
       if (initialCloudSetupComplete) {
         setupClouds(true);
       }
     });
+    
+    // define visibility change handler outside the conditional block
+    const handleVisibilityChange = () => {
+      isPageVisible = !document.hidden;
+      
+      // force a render when becoming visible again
+      if (isPageVisible) {
+        lastRenderTime = performance.now() - frameInterval;
+      }
+    };
+    
+    // add page visibility detection
+    if (browser) {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
     
     lastRenderTime = performance.now();
     frameId = requestAnimationFrame(animate);
@@ -817,7 +837,7 @@
       const width = window.innerWidth;
       const height = window.innerHeight;
       
-      // Update orthographic camera on resize
+      // update orthographic camera on resize
       const aspect = width / height;
       const frustumSize = 300;
       camera.left = frustumSize * aspect / -2;
@@ -829,11 +849,11 @@
       renderer.setSize(width, height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       
-      // Regenerate clouds based on new viewport size
-      setupClouds(true); // Pass true to indicate this is a resize
+      // regenerate clouds based on new viewport size
+      setupClouds(true); // pass true to indicate this is a resize
     };
 
-    // Only update on actual resize, not continuous events
+    // only update on actual resize, not continuous events
     let resizeTimeout: ReturnType<typeof setTimeout>;
     const debouncedResize = () => {
       clearTimeout(resizeTimeout);
@@ -847,6 +867,12 @@
       unsubscribeContent();
       unsubscribeExclusionZones();
       window.removeEventListener('resize', debouncedResize);
+      
+      // remove visibility change listener
+      if (browser) {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+      
       renderer?.dispose();
       container?.removeChild(renderer.domElement);
     };

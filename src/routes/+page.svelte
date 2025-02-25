@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Page-specific logic (if any)
+  // page-specific logic (if any)
 </script>
 
 <div class="flex flex-col items-center">
