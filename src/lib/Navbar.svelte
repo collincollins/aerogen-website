@@ -16,6 +16,11 @@
   let contactContainerSize = "";
   let contactContainerPosition = "";
   let questionMarkSize = "";
+  let disableTransitions = false;
+  
+  // Reference to the cloud containers for direct DOM manipulation
+  let logoContainer: HTMLDivElement;
+  let contactContainer: HTMLDivElement;
   
   const updateSize = (matches: boolean) => {
     // Logo cloud sizing
@@ -24,7 +29,7 @@
     
     // Contact cloud sizing (slightly smaller than logo)`
     contactContainerSize = matches ? "w-[10rem] h-[10rem]" : "w-[6rem] h-[6rem]";
-    contactContainerPosition = matches ? "top-[-1rem] right-[2rem]" : "top-[-1rem] right-[0rem]";
+    contactContainerPosition = matches ? "top-[-1rem] right-[2rem]" : "top-[-1.5rem] right-[0rem]";
     
     // Question mark sizing
     questionMarkSize = matches ? "text-3xl mt-3" : "text-xl mt-3";
@@ -40,10 +45,58 @@
       const mediaQuery = window.matchMedia('(min-width: 768px)');
       // Ensure correct initial state
       updateSize(mediaQuery.matches);
-      mediaQuery.addEventListener('change', (e) => updateSize(e.matches));
+      
+      // Track previous window dimensions to detect snap events
+      let prevWidth = window.innerWidth;
+      let prevHeight = window.innerHeight;
+      let lastResizeTime = 0;
+      
+      // Handle window resize with snap detection
+      const handleResize = () => {
+        const now = performance.now();
+        const deltaTime = now - lastResizeTime;
+        const widthDelta = Math.abs(window.innerWidth - prevWidth);
+        const heightDelta = Math.abs(window.innerHeight - prevHeight);
+        
+        // Detect snap event: large size change in very short time
+        // or resize after a period of inactivity
+        const isSnapEvent = (widthDelta > 100 || heightDelta > 100) && 
+                           (deltaTime < 50 || deltaTime > 500);
+        
+        if (isSnapEvent) {
+          // For snap events, temporarily disable transitions
+          disableTransitions = true;
+          
+          // Force update immediately
+          updateSize(mediaQuery.matches);
+          
+          // Re-enable transitions after DOM has updated
+          setTimeout(() => {
+            disableTransitions = false;
+          }, 50);
+        } else {
+          // Normal resize, use transitions
+          updateSize(mediaQuery.matches);
+        }
+        
+        // Update tracking variables
+        prevWidth = window.innerWidth;
+        prevHeight = window.innerHeight;
+        lastResizeTime = now;
+      };
+      
+      // Standard media query listener for style changes
+      const handleMediaChange = (e: MediaQueryListEvent) => {
+        updateSize(e.matches);
+      };
+      
+      // Add event listeners
+      window.addEventListener('resize', handleResize);
+      mediaQuery.addEventListener('change', handleMediaChange);
       
       return () => {
-        mediaQuery.removeEventListener('change', (e) => updateSize(e.matches));
+        window.removeEventListener('resize', handleResize);
+        mediaQuery.removeEventListener('change', handleMediaChange);
       };
     }
   });
@@ -85,10 +138,11 @@
 <header class="fixed top-0 left-0 w-full z-50">
   <div class="flex justify-between items-center px-8 py-4">
     <!-- Left side - logo cloud container -->
-    <div class="absolute {logoContainerPosition} {logoContainerSize} 
-                transition-all duration-200 ease-in-out">
+    <div bind:this={logoContainer} class="absolute {logoContainerPosition} {logoContainerSize}"
+         class:transition-all={!disableTransitions} class:duration-200={!disableTransitions}>
       <Cloud3D bind:this={logoCloudComponent} />
-      <div class="absolute inset-0 flex flex-col items-center justify-center">
+      <div class="absolute inset-0 flex flex-col items-center justify-center"
+           class:transition-all={!disableTransitions} class:duration-200={!disableTransitions}>
         <!-- Shadow layer -->
         <img 
           src={logo} 
@@ -112,10 +166,11 @@
     </div>
     
     <!-- Right side - Contact cloud container -->
-    <div class="absolute {contactContainerPosition} {contactContainerSize} 
-                transition-all duration-300 ease-in-out">
+    <div bind:this={contactContainer} class="absolute {contactContainerPosition} {contactContainerSize}"
+         class:transition-all={!disableTransitions} class:duration-200={!disableTransitions}>
       <Cloud3DReverse bind:this={contactCloudComponent} />
-      <div class="absolute inset-0 flex flex-col items-center justify-center">
+      <div class="absolute inset-0 flex flex-col items-center justify-center"
+           class:transition-all={!disableTransitions} class:duration-200={!disableTransitions}>
         <button 
           class="relative border-0 p-0 {questionMarkSize} text-primary font-aileron font-bold active:scale-90 transition-transform duration-50"
           class:opacity-90={$currentSection !== 'contact'}
