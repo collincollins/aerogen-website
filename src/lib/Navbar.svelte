@@ -29,7 +29,7 @@
     
     // Contact cloud sizing (slightly smaller than logo)`
     contactContainerSize = matches ? "w-[10rem] h-[10rem]" : "w-[6rem] h-[6rem]";
-    contactContainerPosition = matches ? "top-[-1rem] right-[2rem]" : "top-[-1.5rem] right-[0rem]";
+    contactContainerPosition = matches ? "top-[-2rem] right-[0rem]" : "top-[-1.5rem] right-[0rem]";
     
     // Question mark sizing
     questionMarkSize = matches ? "text-3xl mt-3" : "text-xl mt-3";

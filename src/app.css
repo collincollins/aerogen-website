@@ -48,21 +48,30 @@
   /* Subtle pulse animation for the glow effect */
   @keyframes subtle-pulse {
     0%, 100% { opacity: 0.2; transform: scale(1.05); }
+    10% { opacity: 0.22; transform: scale(1.055); }
+    20% { opacity: 0.24; transform: scale(1.06); }
+    30% { opacity: 0.26; transform: scale(1.065); }
+    40% { opacity: 0.28; transform: scale(1.07); }
     50% { opacity: 0.3; transform: scale(1.08); }
+    60% { opacity: 0.28; transform: scale(1.07); }
+    70% { opacity: 0.26; transform: scale(1.065); }
+    80% { opacity: 0.24; transform: scale(1.06); }
+    90% { opacity: 0.22; transform: scale(1.055); }
   }
   
   /* Title glow animation - simplified white glow */
   @keyframes title-glow {
-    0%, 100% { filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5)); }
-    50% { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); }
+    0%, 100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+    50% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4); }
   }
   
   .title-glow {
     animation: title-glow 5s ease-in-out infinite;
+    will-change: text-shadow;
   }
   
   .glow-effect {
-    animation: subtle-pulse 6s ease-in-out infinite;
+    animation: subtle-pulse 5s ease-in-out infinite;
   }
   
   .hide-scrollbar {
