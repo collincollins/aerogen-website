@@ -19,6 +19,25 @@
   // Flag to control DevTools visibility (set to false for production)
   const showDevTools = browser && dev;
   
+  // Track last section to detect changes
+  let lastSection = '';
+  
+  // Scroll to top when section changes
+  currentSection.subscribe(section => {
+    if (browser && lastSection && section !== lastSection) {
+      // Wait a small amount of time for the transition to start
+      setTimeout(() => {
+        // Target the specific scrollable container with a more precise selector
+        const contentContainer = document.querySelector('div.absolute.inset-0.overflow-y-auto');
+        if (contentContainer) {
+          contentContainer.scrollTo({ top: 0, behavior: 'smooth' });
+          console.log(`Scrolling to top for section change: ${lastSection} → ${section}`);
+        }
+      }, 100); // Small delay to allow for transition to start
+    }
+    lastSection = section;
+  });
+  
   // EmailJS configuration - these should be environment variables in production
   // In a real production app, these would be loaded from environment variables
   // and not exposed in client-side code

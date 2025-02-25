@@ -62,7 +62,6 @@
     .stats-panel {
       position: fixed;
       left: 10px;
-      top: 50%;
       z-index: 998;
       pointer-events: none;
     }
@@ -72,11 +71,11 @@
     }
     
     .stats-panel-ms {
-      transform: translateY(0px);
+      transform: translateY(-50px);
     }
     
     .stats-panel-mb {
-      transform: translateY(100px);
+      transform: translateY(0px);
     }
     
     .stats-label {
@@ -119,7 +118,6 @@
   // toggle performance monitor visibility
   function togglePerformanceMonitor() {
     showPerformanceMonitor = !showPerformanceMonitor;
-    console.log("Performance monitor toggled:", showPerformanceMonitor);
     updateStatsVisibility();
   }
   
@@ -127,8 +125,6 @@
   const setupPerformanceMonitor = async (): Promise<void> => {
     try {
       if (browser) {
-        console.log("Setting up performance monitor");
-        
         // Add custom styles for stats panel positioning
         const styleElement = document.createElement('style');
         styleElement.textContent = statsPanelStyles;
@@ -153,13 +149,11 @@
         memPanel.showPanel(2); // 2: mb
         addLabelToPanel(memPanel.dom, 'MB');
         
-        // Start animation loop before setting visibility
-        startStatsAnimation();
-        
         // Set initial visibility
         updateStatsVisibility();
         
-        console.log("Performance monitor setup complete");
+        // Start animation loop
+        startStatsAnimation();
       }
     } catch (error) {
       console.error('Failed to load Stats.js', error);
@@ -170,25 +164,20 @@
   const updateStatsVisibility = (): void => {
     if (!browser) return;
     
-    console.log("Updating stats visibility:", showPerformanceMonitor);
-    
     if (showPerformanceMonitor) {
       // Add FPS panel
       if (stats && !document.body.contains(stats.dom)) {
         document.body.appendChild(stats.dom);
-        console.log("Added FPS panel to body");
       }
       
       // Add MS panel
       if (msPanel && !document.body.contains(msPanel.dom)) {
         document.body.appendChild(msPanel.dom);
-        console.log("Added MS panel to body");
       }
       
       // Add MB panel
       if (memPanel && !document.body.contains(memPanel.dom)) {
         document.body.appendChild(memPanel.dom);
-        console.log("Added MB panel to body");
       }
     } else {
       // Remove all panels
