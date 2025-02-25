@@ -11,7 +11,7 @@
     particleOpacity: [0.6, 0.9], // Higher starting opacity
     color: 'rgba(255, 255, 255, 0.8)' // Semi-transparent white
   };
-  
+
   let container: HTMLDivElement;
   let particles: HTMLDivElement[] = [];
   let animationId: number;
