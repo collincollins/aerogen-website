@@ -26,6 +26,7 @@
 	},
 	"dependencies": {
 		"@emailjs/browser": "^4.4.1",
+		"stats.js": "^0.17.0",
 		"three": "^0.162.0"
 	}
 }

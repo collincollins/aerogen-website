@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as THREE from 'three';
+  import { Tween, Easing, update } from 'three/examples/jsm/libs/tween.module.js';
   import { currentSection } from './stores/navigation';
   import { showContentToggle, showExclusionZones } from './stores/devTools';
   import { browser, dev } from '$app/environment';
@@ -698,28 +699,35 @@
       transitionFromPosition = lastSectionForRender ? sections[lastSectionForRender]?.position || 0 : 0;
       transitionToPosition = sections[$currentSection].position;
       lastSectionForRender = $currentSection;
+      
+      // use TWEEN.js for smooth cloud transitions
+      clouds.forEach(cloud => {
+        const startX = cloud.position.x;
+        const targetX = cloud.userData.originalX - (transitionToPosition * cloud.userData.parallaxSpeed);
+        
+        // create a tween for each cloud with natural easing
+        new Tween({ x: startX })
+          .to({ x: targetX }, TRANSITION_DURATION)
+          .easing(Easing.Cubic.InOut)
+          .onUpdate(function(obj: { x: number }) {
+            cloud.position.x = obj.x;
+          })
+          .start();
+      });
+      
+      // create a tween to track transition completion
+      new Tween({ progress: 0 })
+        .to({ progress: 1 }, TRANSITION_DURATION)
+        .onComplete(() => {
+          isTransitioning = false;
+        })
+        .start();
     }
     
-    // calculate current position based on transition or current section
-    let baseOffset;
-    if (isTransitioning) {
-      const transitionTime = timestamp - transitionStartTime;
-      const progress = Math.min(transitionTime / TRANSITION_DURATION, 1);
-      
-      // use smooth easing function for transitions
-      const easedProgress = easeInOutCubic(progress);
-      baseOffset = transitionFromPosition + (transitionToPosition - transitionFromPosition) * easedProgress;
-      
-      // end transition when complete
-      if (progress >= 1) {
-        isTransitioning = false;
-      }
-    } else {
-      baseOffset = sections[$currentSection].position;
-    }
+    // update all tweens
+    update();
     
     const time = performance.now() * 0.001;
-    
     let needsRender = false;
     
     // always render during transitions
@@ -732,43 +740,36 @@
       needsRender = true;
     }
     
-    // update more clouds during transitions
-    const cloudUpdateCount = isTransitioning ? 
-      clouds.length : // update all clouds during transition
-      Math.min(clouds.length, 20); // otherwise only update 20
-    
-    // use sequential updating during transitions for more consistency
-    const startIndex = isTransitioning ? 0 : Math.floor(Math.random() * clouds.length);
-    
-    for (let i = 0; i < cloudUpdateCount; i++) {
-      const index = (startIndex + i) % clouds.length;
-      const cloud = clouds[index];
+    // only process normal cloud updates when not transitioning
+    if (!isTransitioning) {
+      // Update a limited number of clouds per frame when not transitioning
+      const cloudUpdateCount = Math.min(clouds.length, 20);
+      const startIndex = Math.floor(Math.random() * clouds.length);
       
-      // only process visible clouds
-      if (!isInView(cloud.position)) continue;
-      
-      needsRender = true;
-      
-      // apply individual rotation around Y axis only
-      cloud.rotation.y += cloud.userData.rotationSpeed;
-      
-      // calculate eased parallax movement
-      const targetX = cloud.userData.originalX - (baseOffset * cloud.userData.parallaxSpeed);
-      const currentX = cloud.position.x;
-      
-      // use a larger easing factor during transitions for smoother motion
-      const easingFactor = isTransitioning ? 0.25 : 0.05;
-      
-      // lower threshold during transitions
-      const updateThreshold = isTransitioning ? 0.01 : 0.05;
-      
-      // only update if the change is significant (small threshold during transitions)
-      if (Math.abs(targetX - currentX) > updateThreshold) {
-        const easedX = currentX + (targetX - currentX) * easingFactor;
-        cloud.position.x = easedX;
+      for (let i = 0; i < cloudUpdateCount; i++) {
+        const index = (startIndex + i) % clouds.length;
+        const cloud = clouds[index];
+        
+        // only process visible clouds
+        if (!isInView(cloud.position)) continue;
+        
+        needsRender = true;
+        
+        // apply individual rotation around Y axis only
+        cloud.rotation.y += cloud.userData.rotationSpeed;
+        
+        // normal movement (only when not in a transition)
+        const targetX = cloud.userData.originalX - (sections[$currentSection].position * cloud.userData.parallaxSpeed);
+        const currentX = cloud.position.x;
+        
+        // only update if the change is significant
+        if (Math.abs(targetX - currentX) > 0.05) {
+          const easedX = currentX + (targetX - currentX) * 0.05;
+          cloud.position.x = easedX;
+        }
         
         // apply subtle vertical oscillation to each sphere in the cloud
-        // only if the cloud is close enough to be visible and only update every other frame
+        // limit to every other cloud when not transitioning to save performance
         if (i % 2 === 0) {
           cloud.children.forEach((object) => {
             if (object.type === 'Mesh') {
@@ -781,17 +782,31 @@
           });
         }
       }
+    } else {
+      // During transitions, always process vertical oscillation for all clouds
+      // to maintain visual consistency
+      clouds.forEach(cloud => {
+        // apply rotation for all clouds during transition
+        cloud.rotation.y += cloud.userData.rotationSpeed;
+        
+        cloud.children.forEach((object) => {
+          if (object.type === 'Mesh') {
+            const userData = object.userData;
+            if (userData.oscillationSpeed) {
+              const oscillation = Math.sin(time * userData.oscillationSpeed + userData.oscillationOffset) * userData.oscillationAmplitude;
+              object.position.y = userData.originalY + oscillation;
+            }
+          }
+        });
+      });
+      
+      needsRender = true;
     }
 
-    // only render when something has changed
+    // render the scene
     if (needsRender || !isVisible) {
       renderer.render(scene, camera);
     }
-  };
-
-  // easing function for smoother transitions
-  const easeInOutCubic = (t: number): number => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   };
 
   onMount(() => {

@@ -3,6 +3,7 @@
   import { dev } from '$app/environment';
   import { browser } from '$app/environment';
   import { onMount, onDestroy } from 'svelte';
+  import { writable } from 'svelte/store';
   
   let showContent = true;
   let showZones = false;
@@ -33,58 +34,189 @@
     showExclusionZones.set(showZones);
   };
   
-  // stats.js instance for performance monitoring
-  let stats;
+  // Interfaces for Stats.js
+  interface StatsPanel {
+    dom: HTMLElement;
+    update: () => void;
+  }
+  
+  interface EnhancedStats extends StatsPanel {
+    showPanel: (id: number) => void;
+    msPanel?: StatsPanel;
+    memPanel?: StatsPanel;
+  }
+  
+  // Stats constructor type
+  interface StatsConstructor {
+    new(): EnhancedStats;
+    default: new() => EnhancedStats;
+  }
+  
+  // stats.js instances for performance monitoring
+  let stats: EnhancedStats | null = null;
+  let msPanel: EnhancedStats | null = null;
+  let memPanel: EnhancedStats | null = null;
+  
+  // Improved styling for stats panels
+  const statsPanelStyles = `
+    .stats-panel {
+      position: fixed;
+      left: 10px;
+      top: 50%;
+      z-index: 998;
+      pointer-events: none;
+    }
+    
+    .stats-panel-fps {
+      transform: translateY(-100px);
+    }
+    
+    .stats-panel-ms {
+      transform: translateY(0px);
+    }
+    
+    .stats-panel-mb {
+      transform: translateY(100px);
+    }
+    
+    .stats-label {
+      position: absolute;
+      left: 85px;
+      top: 0;
+      width: 30px;
+      height: 48px;
+      color: #fff;
+      font-family: 'aileron', sans-serif;
+      font-size: 10px;
+      line-height: 48px;
+      font-weight: bold;
+      text-align: left;
+      text-shadow: 0 0 2px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+  `;
+  
+  // Function to enhance stats panel with label
+  const addLabelToPanel = (panel: HTMLElement, label: string): void => {
+    // Add unique class to each panel for positioning
+    if (label === 'FPS') {
+      panel.classList.add('stats-panel', 'stats-panel-fps');
+    } else if (label === 'MS') {
+      panel.classList.add('stats-panel', 'stats-panel-ms');
+    } else if (label === 'MB') {
+      panel.classList.add('stats-panel', 'stats-panel-mb');
+    } else {
+      panel.classList.add('stats-panel');
+    }
+    
+    // Create and append label element
+    const labelElement = document.createElement('div');
+    labelElement.className = 'stats-label';
+    labelElement.textContent = label;
+    panel.appendChild(labelElement);
+  };
   
   // toggle performance monitor visibility
   function togglePerformanceMonitor() {
     showPerformanceMonitor = !showPerformanceMonitor;
+    console.log("Performance monitor toggled:", showPerformanceMonitor);
     updateStatsVisibility();
   }
   
   // setup stats.js performance monitor
-  function setupPerformanceMonitor() {
-    if (!browser || !dev) return;
-    
-    // dynamically import stats.js
-    import('stats.js').then(statsModule => {
-      stats = new statsModule.default();
-      
-      // configure stats panels
-      stats.showPanel(0); // FPS
-      
-      // style the container
-      const statsElement = stats.dom;
-      statsElement.style.position = 'fixed';
-      statsElement.style.left = '10px';
-      statsElement.style.bottom = '10px';
-      statsElement.style.zIndex = '9999';
-      
-      // add to the document only if visible
-      if (showPerformanceMonitor) {
-        document.body.appendChild(statsElement);
+  const setupPerformanceMonitor = async (): Promise<void> => {
+    try {
+      if (browser) {
+        console.log("Setting up performance monitor");
+        
+        // Add custom styles for stats panel positioning
+        const styleElement = document.createElement('style');
+        styleElement.textContent = statsPanelStyles;
+        document.head.appendChild(styleElement);
+        
+        // Import Stats dynamically only in browser
+        const StatsModule = await import('stats.js');
+        const Stats = StatsModule.default as unknown as StatsConstructor;
+        
+        // Create FPS panel and add label
+        stats = new Stats();
+        stats.showPanel(0); // 0: fps, 1: ms, 2: mb
+        addLabelToPanel(stats.dom, 'FPS');
+        
+        // Create MS panel and add label
+        msPanel = new Stats();
+        msPanel.showPanel(1); // 1: ms
+        addLabelToPanel(msPanel.dom, 'MS');
+        
+        // Create MB panel and add label
+        memPanel = new Stats();
+        memPanel.showPanel(2); // 2: mb
+        addLabelToPanel(memPanel.dom, 'MB');
+        
+        // Start animation loop before setting visibility
+        startStatsAnimation();
+        
+        // Set initial visibility
+        updateStatsVisibility();
+        
+        console.log("Performance monitor setup complete");
       }
-      
-      // start monitoring
-      requestAnimationFrame(function loop() {
-        stats.update();
-        requestAnimationFrame(loop);
-      });
-    }).catch(error => {
-      console.error('Failed to load stats.js:', error);
-    });
-  }
+    } catch (error) {
+      console.error('Failed to load Stats.js', error);
+    }
+  };
   
-  // update stats visibility
-  function updateStatsVisibility() {
-    if (!stats) return;
+  // Function to update stats panels visibility
+  const updateStatsVisibility = (): void => {
+    if (!browser) return;
+    
+    console.log("Updating stats visibility:", showPerformanceMonitor);
     
     if (showPerformanceMonitor) {
-      document.body.appendChild(stats.dom);
-    } else if (document.body.contains(stats.dom)) {
-      document.body.removeChild(stats.dom);
+      // Add FPS panel
+      if (stats && !document.body.contains(stats.dom)) {
+        document.body.appendChild(stats.dom);
+        console.log("Added FPS panel to body");
+      }
+      
+      // Add MS panel
+      if (msPanel && !document.body.contains(msPanel.dom)) {
+        document.body.appendChild(msPanel.dom);
+        console.log("Added MS panel to body");
+      }
+      
+      // Add MB panel
+      if (memPanel && !document.body.contains(memPanel.dom)) {
+        document.body.appendChild(memPanel.dom);
+        console.log("Added MB panel to body");
+      }
+    } else {
+      // Remove all panels
+      if (stats && document.body.contains(stats.dom)) {
+        document.body.removeChild(stats.dom);
+      }
+      
+      if (msPanel && document.body.contains(msPanel.dom)) {
+        document.body.removeChild(msPanel.dom);
+      }
+      
+      if (memPanel && document.body.contains(memPanel.dom)) {
+        document.body.removeChild(memPanel.dom);
+      }
     }
-  }
+  };
+  
+  // Animation loop for stats panels
+  const startStatsAnimation = (): void => {
+    if (!browser) return;
+    
+    requestAnimationFrame(function loop() {
+      if (stats) stats.update();
+      if (msPanel) msPanel.update();
+      if (memPanel) memPanel.update();
+      requestAnimationFrame(loop);
+    });
+  };
   
   onMount(() => {
     if (browser && dev) {
@@ -93,8 +225,16 @@
   });
   
   onDestroy(() => {
-    if (stats && stats.dom && document.body.contains(stats.dom)) {
-      document.body.removeChild(stats.dom);
+    if (stats) {
+      if (document.body.contains(stats.dom)) {
+        document.body.removeChild(stats.dom);
+      }
+      if (stats.msPanel && document.body.contains(stats.msPanel.dom)) {
+        document.body.removeChild(stats.msPanel.dom);
+      }
+      if (stats.memPanel && document.body.contains(stats.memPanel.dom)) {
+        document.body.removeChild(stats.memPanel.dom);
+      }
     }
   });
 </script>
@@ -141,12 +281,15 @@
     <!-- performance monitor toggle -->
     <button
       on:click={togglePerformanceMonitor}
-      class:bg-green-500={showPerformanceMonitor}
-      class="p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+      on:keydown={(e) => e.key === 'Enter' && togglePerformanceMonitor()}
+      class={showPerformanceMonitor ? "bg-accent/90 hover:bg-accent text-white px-4 py-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 flex items-center gap-2 text-sm" : "bg-primary/90 hover:bg-primary text-white px-4 py-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 flex items-center gap-2 text-sm"}
       tabindex="0"
-      aria-label="Toggle performance monitor"
+      aria-label={showPerformanceMonitor ? "Hide performance monitor" : "Show performance monitor"}
     >
-      {showPerformanceMonitor ? 'Hide' : 'Show'} Performance
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      </svg>
+      {showPerformanceMonitor ? "Hide Performance" : "Show Performance"}
     </button>
   </div>
 {/if} 

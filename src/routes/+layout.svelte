@@ -151,6 +151,7 @@
   
   <main class="relative hide-scrollbar">
     <ContentSlider>
+      <slot />
       <div slot="main" class="min-h-screen flex flex-col items-center justify-center gap-8 py-24">
         <!-- Main card -->
         <GlassCard width="w-full max-w-2xl">
