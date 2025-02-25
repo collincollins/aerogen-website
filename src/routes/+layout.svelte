@@ -209,18 +209,18 @@
                 <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left font-light">John E. Greif IV</p>
                 
                 <p class="text-primary-dark leading-relaxed mb-0 font-aileron font-light">
-                  I’ve lived aviation since day one. My father founded Tropic Air in Belize in 1979, and I grew up immersed in the world of flight and business, learning the craft from the ground up.
+                  Aviation’s been my life since day one. My father founded Tropic Air in 1979, Belize’s biggest airline today, and I grew up steeped in the airline world—learning the ropes from gate to cockpit.
 
                 </p>
               </div>
             </div>
             
             <p class="text-primary-dark leading-relaxed mb-5 mt-0 font-aileron font-light">
-              That spark led me to the U.S. Air Force, where I sharpened my skills on C-17 jets, followed by a 15+ year career leading operations at Tropic Air and Southern Airways Express, delivering expansions, cost savings, and high-performing teams. Now, I’m bringing that experience to Aerogen, Inc.
+              That drive led me to the U.S. Air Force, where I honed my skills on the C-17, followed by 15 years leading operations at Tropic Air and Southern Airways Express, the U.S.’s largest commuter airline. I pushed route growth by 30%, slashed costs by millions, boosted revenue by millions, and built teams that delivered every time. Now, at Aerogen, Inc., I’m putting that experience to work, helping businesses grow smarter and stronger.
             </p>
             
             <p class="text-primary-dark leading-relaxed font-aileron font-light">
-              Off duty, I’m home with my wife and five kids, where my love for the skies finds its balance in family.
+              At home, I’m with my wife and five kids, where family keeps my feet on the ground between the skies.
             </p>
           </GlassCard>
         </div>
