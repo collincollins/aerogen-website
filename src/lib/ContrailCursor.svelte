@@ -18,7 +18,7 @@
     size: 40,                   // kept the same
     aspectRatio: 746/279,       // kept the same
     speed: 50,                  // kept the same
-    interval: 50000,            // kept the same
+    interval: 40000,            // kept the same
     jitter: 2000,               // kept the same
     contrailDensity: 2,         // kept the same
     contrailColor: 'rgba(255, 255, 255, 0.9)',
@@ -333,7 +333,7 @@
         
         // add vertical offset to position contrails lower (for horizontal flight)
         // this shifts the contrail down from the tailfin to the exhaust area
-        const verticalAdjust = AIRPLANE.size * 0.47; // downward shift
+        const verticalAdjust = AIRPLANE.size * 0.468; // downward shift
         const contrailOffsetY = Math.sin(radians + Math.PI) * (AIRPLANE.size * 0.01) + verticalAdjust;
         
         const contrailX = newX + contrailOffsetX*0.01;

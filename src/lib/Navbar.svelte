@@ -15,7 +15,7 @@
   let logoContainerPosition = "";
   let contactContainerSize = "";
   let contactContainerPosition = "";
-  let questionMarkSize = "";
+  let envelopeIconSize = "";
   let disableTransitions = false;
   
   // reference to the cloud containers for direct dom manipulation
@@ -31,8 +31,8 @@
     contactContainerSize = matches ? "w-[10rem] h-[10rem]" : "w-[6rem] h-[6rem]";
     contactContainerPosition = matches ? "top-[-2rem] right-[0rem]" : "top-[-1.5rem] right-[0rem]";
     
-    // question mark sizing
-    questionMarkSize = matches ? "text-3xl mt-3" : "text-xl mt-3";
+    // envelope icon sizing - larger on desktop for better visibility
+    envelopeIconSize = matches ? "h-8 w-8" : "h-6 w-6";
   };
 
   // set initial size immediately based on window width if in browser
@@ -180,7 +180,7 @@
         >
           <!-- envelope svg icon -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
-               class="{questionMarkSize} w-[1.6rem] h-[1.6rem]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               class="{envelopeIconSize} transition-all duration-200 mt-3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
             <path d="M22 6l-10 7L2 6"></path>
           </svg>
