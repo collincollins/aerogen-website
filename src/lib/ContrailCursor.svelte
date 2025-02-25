@@ -2,225 +2,163 @@
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   
-  // configuration for a smoke-like contrail effect (optimized)
+  // separate configurations for cursor and airplane contrails
   const CONFIG = {
-    maxParticles: 70,          // increased from 150 for much denser trails
-    particleLife: 500,         // increased for longer-lasting trails
-    emissionRate: 1,            // emit on every mouse movement event for maximum density
-    particleSize: [6, 12],      // increased size range for more visible particles
-    particleOpacity: [0.7, 1.0], // higher opacity for more visible trails
-    color: 'rgba(255, 255, 255, 0.9)', // slightly more opaque
-    moveThreshold: 1,           // reduced to create particles with minimal movement
-    skipFrames: 1               // update every frame for smoother appearance
-  };
-  
-  // Airplane flyby configuration
-  const AIRPLANE = {
-    size: 40,                   // kept the same
-    aspectRatio: 746/279,       // kept the same
-    speed: 60,                  // kept the same
-    interval: 40000,            // kept the same
-    jitter: 2000,               // kept the same
-    contrailDensity: 1,         // increased density (lower number = more particles)
-    contrailColor: 'rgba(255, 255, 255, 0.95)', // more visible contrails
-    contrailLife: 1000          // longer-lasting airplane contrails
+    // core parameters
+    maxParticles: 300,      // maximum number of particles in the system
+    
+    // cursor contrail parameters
+    cursor: {
+      particleLife: 800,    // shorter lifespan for cursor particles
+      emissionRate: 1,      // emit frequently for density
+      particlesPerEmission: 2, // multiple particles per emission for ribbon effect
+      particleSize: 3,      // base size of particles
+      blurAmount: 20,        // blur effect for smoother appearance
+      spreadFactor: 5       // spread factor for ribbon width
+    },
+    
+    // airplane contrail parameters
+    airplane: {
+      particleLife: 4000,   // longer lifespan for airplane contrails
+      emissionRate: 20,     // emit more frequently for denser trails
+      particleSize: 3,      // slightly larger particles
+      blurAmount: 5,        // more blur for smoke-like appearance
+      fadeDelay: 0.6,       // start fading earlier
+      spreadFactor: 1.5     // spread factor for contrail width
+    },
+    
+    // airplane parameters
+    airplaneInterval: 40000, // time between airplane appearances (ms)
+    airplaneSpeed: 60,       // speed of airplane movement
+    airplaneSize: 40,        // base size of the airplane
+    airplaneAspectRatio: 746/279 // width/height ratio of the airplane image
   };
 
+  // DOM references
   let container: HTMLDivElement;
-  let particles: HTMLDivElement[] = [];
-  let animationId: number;
+  let canvas: HTMLCanvasElement;
+  let ctx: CanvasRenderingContext2D;
+  let airplaneElements: HTMLImageElement[] = []; // store airplane DOM elements
+  
+  // state variables
+  let particles: Particle[] = [];
   let mouseX = 0;
   let mouseY = 0;
-  let lastX = 0;
-  let lastY = 0;
-  let prevDx = 0;
-  let prevDy = 0;
-  let flybyInterval: number | null = null;
-  let airplaneElements: HTMLDivElement[] = [];
-  let frameCounter = 0;
+  let lastMouseX = 0;
+  let lastMouseY = 0;
+  let lastEmitTime = 0;
+  let animationId: number;
   let isPageVisible = true;
+  let flybyInterval: number | null = null;
   
-  // create a particle at the current mouse position (optimized)
-  function createParticle() {
-    // calculate mouse movement delta
-    const dx = mouseX - lastX;
-    const dy = mouseY - lastY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+  // define particle type with additional properties
+  type Particle = {
+    x: number;
+    y: number;
+    size: number;
+    age: number;
+    maxLife: number;
+    isContrail: boolean;
+    velocityX?: number;
+    velocityY?: number;
+  };
+  
+  // create a new cursor particle
+  function createCursorParticle(x: number, y: number): Particle {
+    // calculate movement direction for ribbon effect
+    const dx = x - lastMouseX;
+    const dy = y - lastMouseY;
     
-    // don't create particles if mouse is stationary or moving very little
-    if (distance < CONFIG.moveThreshold) return;
+    // add perpendicular offset for ribbon width
+    let perpX = 0;
+    let perpY = 0;
     
-    // store movement direction (or use previous direction if tiny movement)
-    if (distance > 1) {
-      prevDx = dx;
-      prevDy = dy;
-    }
-    
-    // create multiple particles per movement for extra density
-    const particlesPerMove = 2; // create two particles per mouse movement
-    
-    for (let i = 0; i < particlesPerMove; i++) {
-      // add slight position variation for each additional particle
-      const offsetX = i === 0 ? 0 : (Math.random() - 0.5) * 5;
-      const offsetY = i === 0 ? 0 : (Math.random() - 0.5) * 5;
-      
-      // create particle element
-      const particle = document.createElement('div');
-      
-      // generate random size - use same calculation as airplane contrails
-      const size = CONFIG.particleSize[0] + 
-                  Math.random() * (CONFIG.particleSize[1] - CONFIG.particleSize[0]);
-      
-      // initial opacity - match airplane contrail opacity
-      const opacity = CONFIG.particleOpacity[0] + 
-                     Math.random() * (CONFIG.particleOpacity[1] - CONFIG.particleOpacity[0]);
-      
-      // style the particle
-      Object.assign(particle.style, {
-        position: 'absolute',
-        left: '0',
-        top: '0',
-        width: `${size}px`,
-        height: `${size}px`,
-        borderRadius: '50%',
-        backgroundColor: CONFIG.color,
-        opacity: String(opacity),
-        transform: `translate(${mouseX + offsetX}px, ${mouseY + offsetY}px)`,
-        pointerEvents: 'none',
-        filter: 'blur(1px)'
-      });
-      
-      // add to container
-      container.appendChild(particle);
-      particles.push(particle);
-      
-      // calculate direction vector (normalized)
-      const dirLength = Math.sqrt(prevDx * prevDx + prevDy * prevDy);
-      let dirX = dirLength > 0 ? prevDx / dirLength : 0;
-      let dirY = dirLength > 0 ? prevDy / dirLength : 0;
-      
-      // store only essential data for animation
-      particle.dataset.x = String(mouseX + offsetX);
-      particle.dataset.y = String(mouseY + offsetY);
-      particle.dataset.velX = String(-dirX * (0.2 + Math.random() * 0.3)); // increased velocity for more dynamic trails
-      particle.dataset.velY = String(-dirY * (0.2 + Math.random() * 0.3)); // increased velocity for more dynamic trails
-      particle.dataset.age = '0';
-      particle.dataset.size = String(size);
-      particle.dataset.opacity = String(opacity);
-    }
-    
-    // update last position
-    lastX = mouseX;
-    lastY = mouseY;
-    
-    // limit total particles
-    while (particles.length > CONFIG.maxParticles) {
-      const oldParticle = particles.shift();
-      if (oldParticle && container.contains(oldParticle)) {
-        container.removeChild(oldParticle);
+    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+      // calculate perpendicular vector
+      const length = Math.sqrt(dx * dx + dy * dy);
+      if (length > 0) {
+        perpX = -dy / length * CONFIG.cursor.spreadFactor;
+        perpY = dx / length * CONFIG.cursor.spreadFactor;
       }
     }
+    
+    // add slight randomness to the perpendicular offset
+    const randomFactor = Math.random() * 0.8 + 0.6; // 0.6 to 1.4
+    perpX *= randomFactor;
+    perpY *= randomFactor;
+    
+    // create particle with randomized size
+    return {
+      x: x + perpX,
+      y: y + perpY,
+      size: CONFIG.cursor.particleSize * (0.8 + Math.random() * 0.4),
+      age: 0,
+      maxLife: CONFIG.cursor.particleLife,
+      isContrail: false,
+      velocityX: (Math.random() - 0.5) * 0.2,
+      velocityY: (Math.random() - 0.5) * 0.2 - 0.1 // slight upward drift
+    };
   }
   
-  // Create an airplane contrail particle
-  function createAirplaneContrail(x: number, y: number, dirX: number, dirY: number) {
-    // create particle element
-    const particle = document.createElement('div');
+  // create a new airplane contrail particle
+  function createAirplaneContrail(x: number, y: number): Particle {
+    // add position variation based on spread factor
+    const offsetX = (Math.random() - 0.5) * CONFIG.airplane.spreadFactor * 2;
+    const offsetY = (Math.random() - 0.5) * CONFIG.airplane.spreadFactor * 2;
     
-    // generate random size 
-    const size = CONFIG.particleSize[0] + 
-                Math.random() * (CONFIG.particleSize[1] - CONFIG.particleSize[0]);
-    
-    // initial opacity
-    const opacity = CONFIG.particleOpacity[0] + 
-                   Math.random() * (CONFIG.particleOpacity[1] - CONFIG.particleOpacity[0]);
-    
-    // style the particle
-    Object.assign(particle.style, {
-      position: 'absolute',
-      left: '0',
-      top: '0',
-      width: `${size}px`,
-      height: `${size}px`,
-      borderRadius: '50%',
-      backgroundColor: AIRPLANE.contrailColor,
-      opacity: String(opacity),
-      transform: `translate(${x}px, ${y}px)`,
-      pointerEvents: 'none',
-      filter: 'blur(1px)',
-      zIndex: '5' // Below the airplane (z-index 7)
-    });
-    
-    // add to container
-    container.appendChild(particle);
-    particles.push(particle);
-    
-    // store only essential data for animation
-    particle.dataset.x = String(x);
-    particle.dataset.y = String(y);
-    
-    // contrails trail in the opposite direction of airplane movement
-    // with slight randomness
-    particle.dataset.velX = String(-dirX * (0.1 + Math.random() * 0.2));
-    particle.dataset.velY = String(-dirY * (0.1 + Math.random() * 0.2));
-    particle.dataset.age = '0';
-    particle.dataset.size = String(size);
-    particle.dataset.opacity = String(opacity);
-    particle.dataset.isAirplaneContrail = 'true'; // mark as airplane contrail
-    
-    // limit total particles
-    if (particles.length > CONFIG.maxParticles) {
-      const oldParticle = particles.shift();
-      if (oldParticle && container.contains(oldParticle)) {
-        container.removeChild(oldParticle);
-      }
-    }
+    // create particle with randomized size
+    return {
+      x: x + offsetX,
+      y: y + offsetY,
+      size: CONFIG.airplane.particleSize * (0.9 + Math.random() * 0.3),
+      age: 0,
+      maxLife: CONFIG.airplane.particleLife * (0.8 + Math.random() * 0.4), // randomize lifespan
+      isContrail: true,
+      velocityX: (Math.random() - 0.5) * 0.3,
+      velocityY: (Math.random() - 0.5) * 0.3 - 0.05 // very slight upward drift
+    };
   }
   
-  // Create and animate an airplane flyby
-  function createAirplaneFlyby() {
+  // create a new airplane that will fly across the screen
+  function createAirplane() {
     if (!browser || !container) return;
     
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // create airplane element (using image instead of div)
+    // create airplane element (using image)
     const airplane = document.createElement('img');
     airplane.src = '/cessna.png';
     
     // calculate start and end positions (left to right only)
-    let startX, startY, endX, endY, dirX, dirY, distance, rotation;
-    
-    // start from left side
-    startX = -AIRPLANE.size * AIRPLANE.aspectRatio;
-    startY = viewportHeight * (0.3 + Math.random() * 0.4); // middle 40% of screen height
-    endX = viewportWidth + AIRPLANE.size * AIRPLANE.aspectRatio;
-    endY = startY + (Math.random() * viewportHeight * 0.2 - viewportHeight * 0.1); // small vertical variance
+    const startX = -CONFIG.airplaneSize * CONFIG.airplaneAspectRatio;
+    const startY = viewportHeight * (0.3 + Math.random() * 0.4); // middle 40% of screen height
+    const endX = viewportWidth + CONFIG.airplaneSize * CONFIG.airplaneAspectRatio;
+    const endY = startY + (Math.random() * viewportHeight * 0.2 - viewportHeight * 0.1); // small vertical variance
     
     // calculate direction vector
-    dirX = endX - startX;
-    dirY = endY - startY;
-    distance = Math.sqrt(dirX * dirX + dirY * dirY);
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
     
     // normalize direction
-    dirX = dirX / distance;
-    dirY = dirY / distance;
+    const dirX = dx / distance;
+    const dirY = dy / distance;
     
-    // calculate rotation angle (no extra degrees - keep natural orientation)
-    rotation = Math.atan2(dirY, dirX) * (180 / Math.PI);
+    // calculate rotation angle
+    const rotation = Math.atan2(dirY, dirX) * (180 / Math.PI);
     
     // style the airplane
     Object.assign(airplane.style, {
       position: 'absolute',
       left: '0',
       top: '0',
-      width: `${AIRPLANE.size * AIRPLANE.aspectRatio}px`,
-      height: `${AIRPLANE.size}px`,
+      width: `${CONFIG.airplaneSize * CONFIG.airplaneAspectRatio}px`,
+      height: `${CONFIG.airplaneSize}px`,
       transform: `translate(${startX}px, ${startY}px) rotate(${rotation}deg)`,
       pointerEvents: 'none',
-      zIndex: '7', // higher than contrails (adjusted value)
-      // remove the filter to show original colors
-      opacity: '0.9'
+      zIndex: '-100', // behind contrails and clouds
+      opacity: '1.0'
     });
     
     // add to container
@@ -230,105 +168,127 @@
     // store data for animation
     airplane.dataset.x = String(startX);
     airplane.dataset.y = String(startY);
-    airplane.dataset.dirX = String(dirX);
-    airplane.dataset.dirY = String(dirY);
+    airplane.dataset.endX = String(endX);
+    airplane.dataset.endY = String(endY);
     airplane.dataset.rotation = String(rotation);
-    airplane.dataset.elapsed = '0';
-    airplane.dataset.contrailCount = '0';
+    airplane.dataset.startTime = String(performance.now());
+    airplane.dataset.lastEmitTime = '0';
     
     // calculate animation duration based on distance and speed
-    const duration = distance / AIRPLANE.speed * 1000; // ms
+    const duration = distance / CONFIG.airplaneSpeed * 1000; // ms
     airplane.dataset.duration = String(duration);
   }
   
-  // animation loop (optimized)
-  function animateParticles() {
-    // use requestAnimationFrame timestamp for frame skipping
-    const now = performance.now();
-    
-    // skip animation frames when tab is not visible
-    if (document.hidden || !isPageVisible) {
-      animationId = requestAnimationFrame(animateParticles);
+  // main animation loop
+  function animate() {
+    // skip if not visible
+    if (!isPageVisible || !ctx) {
+      animationId = requestAnimationFrame(animate);
       return;
     }
     
-    // increment frame counter for controlling updates
-    frameCounter++;
+    const now = performance.now();
+    const width = canvas.width;
+    const height = canvas.height;
     
-    // determine if we should update this frame
-    const shouldUpdateAll = frameCounter % CONFIG.skipFrames === 0;
-    const shouldUpdateParticles = shouldUpdateAll;
+    // clear canvas
+    ctx.clearRect(0, 0, width, height);
     
-    // animate contrail particles only on certain frames
-    if (shouldUpdateParticles) {
-      particles = particles.filter(particle => {
-        // increment age
-        const age = Number(particle.dataset.age) + 16 * CONFIG.skipFrames; // account for skipped frames
-        particle.dataset.age = String(age);
-        
-        // determine particle life based on type
-        const isAirplaneContrail = particle.dataset.isAirplaneContrail === 'true';
-        const particleLife = isAirplaneContrail ? AIRPLANE.contrailLife : CONFIG.particleLife;
-        
-        // remove old particles
-        if (age > particleLife) {
-          container.removeChild(particle);
-          return false;
+    // check if we should emit new cursor particles
+    if (now - lastEmitTime > CONFIG.cursor.emissionRate) {
+      // calculate mouse movement since last position
+      const dx = mouseX - lastMouseX;
+      const dy = mouseY - lastMouseY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // only create particles if the mouse is actually moving
+      if (distance > 1 && mouseX > 0 && mouseY > 0) {
+        // create multiple particles per emission for ribbon effect
+        for (let i = 0; i < CONFIG.cursor.particlesPerEmission; i++) {
+          particles.push(createCursorParticle(mouseX, mouseY));
         }
         
-        // calculate life percentage
-        const lifePercentage = age / particleLife;
-        
-        // get current position
-        const x = Number(particle.dataset.x);
-        const y = Number(particle.dataset.y);
-        
-        // get velocity (slows down over time)
-        const velX = Number(particle.dataset.velX) * (1 - lifePercentage * 0.6);
-        const velY = Number(particle.dataset.velY) * (1 - lifePercentage * 0.6) - 0.01; // slight upward drift
-        
-        // update position
-        const newX = x + velX * CONFIG.skipFrames; // account for skipped frames
-        const newY = y + velY * CONFIG.skipFrames; // account for skipped frames
-        particle.dataset.x = String(newX);
-        particle.dataset.y = String(newY);
-        
-        // get original size
-        const originalSize = Number(particle.dataset.size);
-        
-        // slightly decrease size to simulate z-depth
-        const sizeReduction = originalSize * 0.2 * lifePercentage;
-        const newSize = Math.max(0.5, originalSize - sizeReduction);
-        
-        // fade out
-        const originalOpacity = Number(particle.dataset.opacity);
-        const newOpacity = originalOpacity * (1 - lifePercentage);
-        
-        // update styles (minimal properties in a single operation for better performance)
-        const blurAmount = 1 + lifePercentage * 2;
-        Object.assign(particle.style, {
-          transform: `translate(${newX}px, ${newY}px)`,
-          width: `${newSize}px`,
-          height: `${newSize}px`,
-          opacity: String(newOpacity),
-          filter: `blur(${blurAmount}px)`
-        });
-        
-        return true;
-      });
+        // update last position
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+      }
+      
+      lastEmitTime = now;
     }
     
-    // animate airplane elements on every frame for smooth motion
+    // update and draw particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.age += 16; // approximate time between frames
+      
+      // remove old particles
+      if (p.age > p.maxLife) {
+        particles.splice(i, 1);
+        continue;
+      }
+      
+      // update position if velocity is defined
+      if (p.velocityX !== undefined && p.velocityY !== undefined) {
+        p.x += p.velocityX;
+        p.y += p.velocityY;
+        
+        // slow down velocity over time
+        p.velocityX *= 0.98;
+        p.velocityY *= 0.98;
+      }
+      
+      // calculate opacity based on age and type
+      const lifeRatio = p.age / p.maxLife;
+      let opacity;
+      
+      if (p.isContrail) {
+        // airplane contrails stay visible longer before fading
+        opacity = lifeRatio < CONFIG.airplane.fadeDelay 
+          ? 0.2 
+          : 0.2 * (1 - ((lifeRatio - CONFIG.airplane.fadeDelay) / (1 - CONFIG.airplane.fadeDelay)));
+      } else {
+        // cursor contrails use similar fade pattern as airplane contrails
+        opacity = lifeRatio < 0.6
+          ? 0.3
+          : 0.3 * (1 - ((lifeRatio - 0.6) / 0.4));
+      }
+      
+      // calculate size based on age and type
+      let size;
+      if (p.isContrail) {
+        // airplane contrails expand slightly then shrink
+        const sizeMultiplier = lifeRatio < 0.3 
+          ? 1 + lifeRatio * 0.7 
+          : 1.21 - (lifeRatio - 0.3) * 0.3;
+        size = p.size * sizeMultiplier;
+      } else {
+        // cursor contrails just shrink slightly at the end
+        size = p.size * (lifeRatio > 0.7 ? 1 - (lifeRatio - 0.7) * 0.5 : 1);
+      }
+      
+      // draw particle with appropriate blur
+      ctx.filter = p.isContrail 
+        ? `blur(${CONFIG.airplane.blurAmount}px)` 
+        : `blur(${CONFIG.cursor.blurAmount}px)`;
+      
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+      ctx.fill();
+    }
+    
+    // update airplane positions and create contrails
     airplaneElements = airplaneElements.filter(airplane => {
       // get data
-      const elapsed = Number(airplane.dataset.elapsed) + 16; // consistent update regardless of frames skipped
+      const startTime = Number(airplane.dataset.startTime);
       const duration = Number(airplane.dataset.duration);
-      const x = Number(airplane.dataset.x);
-      const y = Number(airplane.dataset.y);
-      const dirX = Number(airplane.dataset.dirX);
-      const dirY = Number(airplane.dataset.dirY);
-      let rotation = Number(airplane.dataset.rotation);
-      let contrailCount = Number(airplane.dataset.contrailCount) + 1; // increment counter
+      const elapsed = now - startTime;
+      const startX = Number(airplane.dataset.x);
+      const startY = Number(airplane.dataset.y);
+      const endX = Number(airplane.dataset.endX);
+      const endY = Number(airplane.dataset.endY);
+      const rotation = Number(airplane.dataset.rotation);
+      const lastEmitTime = Number(airplane.dataset.lastEmitTime || '0');
       
       // remove completed airplanes
       if (elapsed >= duration) {
@@ -336,117 +296,120 @@
         return false;
       }
       
-      // calculate simple linear position
-      const timeElapsed = elapsed / 1000; // in seconds
-      const newX = x + dirX * (timeElapsed * AIRPLANE.speed);
-      const newY = y + dirY * (timeElapsed * AIRPLANE.speed);
+      // calculate current position
+      const progress = elapsed / duration;
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const currentX = startX + dx * progress;
+      const currentY = startY + dy * progress;
       
-      // only create contrails on specific frames for performance
-      if (shouldUpdateParticles && contrailCount >= AIRPLANE.contrailDensity) {
-        // create contrail at the back of the airplane based on current rotation
+      // update airplane position
+      airplane.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotation}deg)`;
+      
+      // create contrail particles at regular intervals
+      if (now - lastEmitTime > CONFIG.airplane.emissionRate) {
+        // calculate contrail position (behind the airplane)
         const radians = rotation * (Math.PI / 180);
-        // position contrails behind engines
-        const contrailOffsetX = Math.cos(radians + Math.PI) * (AIRPLANE.size * AIRPLANE.aspectRatio * 0.4);
-        const verticalAdjust = AIRPLANE.size * 0.468; // downward shift
-        const contrailOffsetY = Math.sin(radians + Math.PI) * (AIRPLANE.size * 0.01) + verticalAdjust;
         
-        const contrailX = newX + contrailOffsetX*0.01;
-        const contrailY = newY + contrailOffsetY;
+        // position contrail directly behind the airplane
+        const trailDistance = -85;
+        const contrailX = currentX - Math.cos(radians) * trailDistance;
+        const contrailY = currentY - Math.sin(radians) * trailDistance + 33;
         
-        // use actual direction for contrail movement
-        const actualDirX = Math.cos(radians);
-        const actualDirY = Math.sin(radians);
+        // create a single contrail particle
+        particles.push(createAirplaneContrail(contrailX, contrailY));
         
-        createAirplaneContrail(contrailX, contrailY, actualDirX, actualDirY);
-        contrailCount = 0;
+        // update last emit time
+        airplane.dataset.lastEmitTime = String(now);
       }
-      
-      // update styles in a single operation
-      airplane.style.transform = `translate(${newX}px, ${newY}px) rotate(${rotation}deg)`;
-      
-      // update data
-      airplane.dataset.elapsed = String(elapsed);
-      airplane.dataset.contrailCount = String(contrailCount);
       
       return true;
     });
     
+    // limit total particles
+    while (particles.length > CONFIG.maxParticles) {
+      // remove oldest particles first
+      particles.shift();
+    }
+    
     // continue animation loop
-    animationId = requestAnimationFrame(animateParticles);
+    animationId = requestAnimationFrame(animate);
+  }
+  
+  // handle window resize
+  function handleResize() {
+    if (!canvas || !ctx) return;
+    
+    // update canvas dimensions
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // reset context properties after resize
+    ctx.globalCompositeOperation = 'lighter'; // makes overlapping particles brighter
   }
   
   onMount(() => {
     if (!browser) return;
     
-    // start animation
-    animationId = requestAnimationFrame(animateParticles);
+    // create canvas
+    canvas = document.createElement('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.position = 'absolute';
+    canvas.style.left = '0';
+    canvas.style.top = '0';
+    canvas.style.pointerEvents = 'none';
     
-    // handle page visibility changes to pause animations when hidden
+    // get context and set initial properties
+    ctx = canvas.getContext('2d')!;
+    ctx.globalCompositeOperation = 'lighter';
+    
+    // add canvas to container
+    container.appendChild(canvas);
+    
+    // start animation
+    animationId = requestAnimationFrame(animate);
+    
+    // handle page visibility changes
     const handleVisibilityChange = () => {
       isPageVisible = !document.hidden;
     };
-    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // add mouse tracking (with throttling for performance)
-    let lastEmit = 0;
-    let emitCounter = 0;
-    
+    // track mouse movement
     const handleMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-      
-      // skip particle creation only occasionally for much denser trails
-      emitCounter++;
-      if (emitCounter % CONFIG.emissionRate !== 0) return;
-      
-      // calculate movement distance
-      const dx = mouseX - lastX;
-      const dy = mouseY - lastY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      // don't create particles if mouse is moving very little
-      if (distance < CONFIG.moveThreshold) return;
-      
-      // more frequent emission with shorter time throttling
-      const now = Date.now();
-      if (now - lastEmit > 16) { // 60fps emission rate (was 32)
-        createParticle();
-        lastEmit = now;
-      }
     };
-    
-    // add event listener with passive flag for performance
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     
-    // set initial position to avoid first-particle jump
-    lastX = window.innerWidth / 2;
-    lastY = window.innerHeight / 2;
+    // handle window resize
+    window.addEventListener('resize', handleResize);
     
-    // set up airplane flybys at regular intervals
+    // set up airplane flybys
     flybyInterval = window.setInterval(() => {
       if (isPageVisible && !document.hidden) {
-        createAirplaneFlyby();
+        createAirplane();
       }
-    }, AIRPLANE.interval + (Math.random() * AIRPLANE.jitter - AIRPLANE.jitter / 2));
+    }, CONFIG.airplaneInterval);
     
-    // create an initial flyby soon after page load
-    setTimeout(createAirplaneFlyby, 2000);
+    // create an initial flyby
+    setTimeout(createAirplane, 2000);
     
     return () => {
       // clean up
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('resize', handleResize);
       if (flybyInterval) clearInterval(flybyInterval);
-      cancelAnimationFrame(animationId);
+      if (animationId) cancelAnimationFrame(animationId);
       
-      // clean up all elements
-      particles.forEach(p => {
-        if (container && container.contains(p)) {
-          container.removeChild(p);
-        }
-      });
+      // remove canvas
+      if (canvas && container.contains(canvas)) {
+        container.removeChild(canvas);
+      }
       
+      // remove airplane elements
       airplaneElements.forEach(a => {
         if (container && container.contains(a)) {
           container.removeChild(a);
@@ -469,7 +432,6 @@
 
 <style>
   .contrail-container {
-    /* lower z-index to ensure it's above background but below clouds and other content */
     overflow: visible;
     contain: layout;
   }
