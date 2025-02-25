@@ -8,7 +8,7 @@
       component: null, // Will be rendered directly from +page.svelte
       position: 0
     },
-    about: {
+    contact: {
       component: null, // We'll create these components next
       position: 100
     },
@@ -32,24 +32,30 @@
   }
 </script>
 
-<div class="relative w-full h-full overflow-hidden">
+<div class="relative w-full h-full overflow-hidden hide-scrollbar">
   <div
-    class="flex transition-transform duration-500 ease-out"
+    class="flex transition-transform duration-500 ease-out hide-scrollbar"
     style="transform: {transform}"
   >
     <!-- Main content -->
-    <div class="min-w-full px-4 sm:px-6 md:px-8">
-      <slot name="main" />
+    <div class="min-w-full hide-scrollbar">
+      <div class="mx-[10%] hide-scrollbar">
+        <slot name="main" />
+      </div>
     </div>
 
-    <!-- About content -->
-    <div class="min-w-full px-4 sm:px-6 md:px-8">
-      <slot name="about" />
+    <!-- Contact content -->
+    <div class="min-w-full hide-scrollbar">
+      <div class="mx-[10%] hide-scrollbar">
+        <slot name="contact" />
+      </div>
     </div>
 
     <!-- Work content (preserved but hidden from navigation) -->
-    <div class="min-w-full px-4 sm:px-6 md:px-8">
-      <slot name="work" />
+    <div class="min-w-full hide-scrollbar">
+      <div class="mx-[10%] hide-scrollbar">
+        <slot name="work" />
+      </div>
     </div>
   </div>
 </div> 

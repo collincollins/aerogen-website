@@ -19,7 +19,7 @@
   // Define all available sections
   const sections = {
     main: { position: 0 },
-    about: { position: 100 },
+    contact: { position: 100 },
     work: { position: 200 }
   };
 
@@ -61,7 +61,7 @@
       emissive: 0xFFFFFF,
       emissiveIntensity: 0.5,
       transparent: true,
-      opacity: 0.98,
+      opacity: 0.95,
     });
 
     // Restore denser sphere formation from navbar version for better visual appearance
@@ -101,7 +101,7 @@
       sphere.position.z = pos.z + (Math.random() - 0.5) * 2;
       
       // Add subtle vertical oscillation to each sphere
-      sphere.userData.oscillationSpeed = 0.0005 + Math.random() * 0.001; // Reduced for performance
+      sphere.userData.oscillationSpeed = 0.0005 + Math.random() * 0.05; // Reduced for performance
       sphere.userData.oscillationOffset = Math.random() * Math.PI * 2;
       sphere.userData.oscillationAmplitude = 0.1 + Math.random() * 0.2;
       
@@ -109,7 +109,7 @@
     });
 
     // Assign random rotation speed - keeps slow enough to not strain CPU
-    group.userData.rotationSpeed = 0.00005 + Math.random() * 0.001;
+    group.userData.rotationSpeed = 0.00005 + Math.random() * 0.005;
     
     return group;
   };
@@ -136,7 +136,7 @@
     cloudScale: number
   ): boolean => {
     // Calculate cloud radius based on scale - increase radius for better coverage
-    const cloudRadius = cloudScale * 12; // Increased from 10 to 12 for better coverage
+    const cloudRadius = cloudScale * 10; // Increased from 10 to 12 for better coverage
     
     for (const zone of exclusionZones) {
       // Check if any part of the cloud overlaps with the exclusion zone
@@ -195,7 +195,7 @@
     for (let attempt = 0; attempt < MAX_ATTEMPTS/2; attempt++) {
       // Try bottom 60% of the screen first
       const x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
-      const y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY) * 0.9;
+      const y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY) * 0.85;
       
       // Randomize scale between min and max
       const scaleFactor = Math.random();
@@ -248,7 +248,14 @@
     
     // Create visualization for each exclusion zone
     exclusionZones.forEach((zone, index) => {
-      const zoneName = index === 0 ? "Logo Cloud Zone" : "Question Mark Cloud Zone";
+      let zoneName = "Exclusion Zone"; // Default value
+      if (index === 0) {
+        zoneName = "Logo Cloud Zone";
+      } else if (index === 1) {
+        zoneName = "Question Mark Cloud Zone";
+      } else if (index === 2) {
+        zoneName = "Title Zone";
+      }
       
       // Create a group for this zone visualization
       const zoneGroup = new THREE.Group();
@@ -256,7 +263,7 @@
       // Create a wireframe box for the zone boundary
       const wireframeGeometry = new THREE.BoxGeometry(zone.width, zone.height, 50);
       const wireframeMaterial = new THREE.MeshBasicMaterial({
-        color: index === 0 ? 0x5FB3F9 : 0x1D49A7, // Use brand colors
+        color: index === 0 ? 0x5FB3F9 : (index === 1 ? 0x1D49A7 : 0xFFFFFF), // Different colors for each zone
         transparent: true,
         opacity: 0.6,
         wireframe: true,
@@ -270,7 +277,7 @@
       // Add a semi-transparent fill
       const fillGeometry = new THREE.BoxGeometry(zone.width - 2, zone.height - 2, 45);
       const fillMaterial = new THREE.MeshBasicMaterial({
-        color: index === 0 ? 0x5FB3F9 : 0x1D49A7, // Use brand colors
+        color: index === 0 ? 0x5FB3F9 : (index === 1 ? 0x1D49A7 : 0xFFFFFF), // Different colors for each zone
         transparent: true,
         opacity: 0.1
       });
@@ -278,28 +285,6 @@
       const fillMesh = new THREE.Mesh(fillGeometry, fillMaterial);
       fillMesh.position.copy(wireframeMesh.position);
       zoneGroup.add(fillMesh);
-      
-      // Add circular indication for the cloud position
-      const cloudIndicatorGeometry = new THREE.CircleGeometry(
-        index === 0 ? zone.width * 0.3 : zone.width * 0.3, 
-        32
-      );
-      const cloudIndicatorMaterial = new THREE.MeshBasicMaterial({
-        color: index === 0 ? 0x5FB3F9 : 0x1D49A7,
-        transparent: true,
-        opacity: 0.3,
-        side: THREE.DoubleSide
-      });
-      
-      const cloudIndicator = new THREE.Mesh(cloudIndicatorGeometry, cloudIndicatorMaterial);
-      cloudIndicator.position.set(
-        // Position at cloud center
-        zone.x + zone.width/2,
-        zone.y - zone.height/2,
-        25
-      );
-      cloudIndicator.rotation.x = Math.PI / 2; // Rotate to face camera
-      zoneGroup.add(cloudIndicator);
       
       // Add a label that moves with the zone
       const labelCanvas = document.createElement('canvas');
@@ -330,7 +315,7 @@
         zoneGroup.add(label);
       }
       
-      // Add a dashed line to show margin
+      // Add a dashed line to show margin - consistent for all zones
       const marginGeometry = new THREE.EdgesGeometry(wireframeGeometry);
       const marginMaterial = new THREE.LineDashedMaterial({
         color: 0xFFFFFF,
@@ -344,25 +329,6 @@
       marginLines.position.copy(wireframeMesh.position);
       marginLines.computeLineDistances(); // Needed for dashed lines
       zoneGroup.add(marginLines);
-      
-      // Add animated pulsing effect for visibility
-      zoneGroup.userData.pulseTime = 0;
-      zoneGroup.userData.pulseDirection = 1;
-      zoneGroup.userData.pulseSpeed = 0.005 + Math.random() * 0.002;
-      zoneGroup.userData.update = (time: number) => {
-        zoneGroup.userData.pulseTime += zoneGroup.userData.pulseDirection * zoneGroup.userData.pulseSpeed;
-        if (zoneGroup.userData.pulseTime > 1) {
-          zoneGroup.userData.pulseTime = 1;
-          zoneGroup.userData.pulseDirection = -1;
-        } else if (zoneGroup.userData.pulseTime < 0) {
-          zoneGroup.userData.pulseTime = 0;
-          zoneGroup.userData.pulseDirection = 1;
-        }
-        
-        const scale = 1 + 0.03 * Math.sin(zoneGroup.userData.pulseTime * Math.PI);
-        wireframeMesh.scale.set(scale, scale, 1);
-        cloudIndicator.scale.set(scale * 1.2, scale * 1.2, 1);
-      };
       
       // Add the group to the scene
       scene.add(zoneGroup);
@@ -402,10 +368,14 @@
     const logoOffsetX = -viewportWidth / 2; // Ensure it's at the edge
     const logoOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.07 : viewportHeight * 0.06);
     
-    // About cloud sizing (from Navbar) - increase sizes by 15% for better coverage
-    const aboutSize = isLargeScreen ? viewportHeight * 0.21 : viewportHeight * 0.17; // Increased size
-    const aboutOffsetX = viewportWidth / 2 - (isLargeScreen ? viewportHeight * 0.06 : viewportHeight * 0.04);
-    const aboutOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.03 : viewportHeight * 0.04);
+    // Contact cloud sizing (from Navbar) - increase sizes by 15% for better coverage
+    const contactSize = isLargeScreen ? viewportHeight * 0.21 : viewportHeight * 0.17; // Increased size
+    const contactOffsetX = viewportWidth / 2 - (isLargeScreen ? viewportHeight * 0.06 : viewportHeight * 0.04);
+    const contactOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.03 : viewportHeight * 0.04);
+    
+    // Aerogen title zone size
+    const titleWidth = isLargeScreen ? viewportWidth * 0.3 : viewportWidth * 0.5; // 30% of viewport width on desktop, 50% on mobile
+    const titleHeight = viewportHeight * 0.08; // 8% of viewport height
     
     // Extra margin around the clouds to ensure no clouds overlap with navigation - increased margin
     const margin = viewportHeight * 0.06; // Increased from 0.04 to 0.06
@@ -420,10 +390,17 @@
       },
       // Question mark zone (upper right)
       {
-        x: aboutOffsetX - aboutSize - margin * 1.5, // Increased leftward coverage
-        y: aboutOffsetY + aboutSize + margin,
-        width: aboutSize + margin * 2.5, // Increased horizontal coverage
-        height: aboutSize + margin * 2
+        x: contactOffsetX - contactSize - margin * 1.5, // Increased leftward coverage
+        y: contactOffsetY + contactSize + margin,
+        width: contactSize + margin * 2.5, // Increased horizontal coverage
+        height: contactSize + margin * 2
+      },
+      // Aerogen title zone (top center)
+      {
+        x: -titleWidth / 2,
+        y: viewportHeight / 2, // At the top of the viewport
+        width: titleWidth,
+        height: titleHeight + margin * 2 // Add margin for safety
       }
     ];
     
@@ -431,7 +408,7 @@
     updateExclusionZoneVisibility(exclusionZones);
     
     // Calculate cloud density - fewer total clouds since each is now denser
-    const cloudsPerViewport = 8;
+    const cloudsPerViewport = 30;
     const targetCloudCount = Math.min(45, Math.ceil(cloudsPerViewport * numSections));
     
     // Force remove any clouds in exclusion zones regardless of resize status
@@ -585,9 +562,9 @@
       
       // Distribution across layers
       const layerDistribution = [
-        { z: -150, count: Math.floor(targetCloudCount * 0.35), minScale: 1.8, maxScale: 2.2 },
-        { z: -100, count: Math.floor(targetCloudCount * 0.35), minScale: 1.2, maxScale: 1.6 },
-        { z: -50, count: Math.floor(targetCloudCount * 0.3), minScale: 0.6, maxScale: 1.0 }
+        { z: -150, count: Math.floor(targetCloudCount * 0.35), minScale: 1.3, maxScale: 1.4 },
+        { z: -100, count: Math.floor(targetCloudCount * 0.35), minScale: 0.8, maxScale: 1.2 },
+        { z: -50, count: Math.floor(targetCloudCount * 0.3), minScale: 0.6, maxScale: 0.8 }
       ];
       
       // Generate positions for all clouds
@@ -705,13 +682,6 @@
     // Ensure rendering when exclusion zones are toggled
     if ($showExclusionZones && exclusionZoneObjects.length > 0) {
       needsRender = true;
-      
-      // Update exclusion zone animations
-      exclusionZoneObjects.forEach(group => {
-        if (group.userData.update) {
-          group.userData.update(time);
-        }
-      });
     }
     
     clouds.forEach(cloud => {
@@ -759,13 +729,13 @@
     // Define exclusion zones for immediate cleanup
     const isLargeScreen = width >= 768;
     const logoSize = isLargeScreen ? viewportHeight * 0.25 : viewportHeight * 0.20;
-    const aboutSize = isLargeScreen ? viewportHeight * 0.21 : viewportHeight * 0.17;
+    const contactSize = isLargeScreen ? viewportHeight * 0.21 : viewportHeight * 0.17;
     const margin = viewportHeight * 0.06;
     
     const logoOffsetX = -viewportWidth / 2;
     const logoOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.07 : viewportHeight * 0.06);
-    const aboutOffsetX = viewportWidth / 2 - (isLargeScreen ? viewportHeight * 0.06 : viewportHeight * 0.04);
-    const aboutOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.03 : viewportHeight * 0.04);
+    const contactOffsetX = viewportWidth / 2 - (isLargeScreen ? viewportHeight * 0.06 : viewportHeight * 0.04);
+    const contactOffsetY = viewportHeight / 2 - (isLargeScreen ? viewportHeight * 0.03 : viewportHeight * 0.04);
     
     const cleanupExclusionZones: ExclusionZone[] = [
       // Logo zone
@@ -777,10 +747,10 @@
       },
       // Question mark zone
       {
-        x: aboutOffsetX - aboutSize - margin * 1.5,
-        y: aboutOffsetY + aboutSize + margin,
-        width: aboutSize + margin * 2.5,
-        height: aboutSize + margin * 2
+        x: contactOffsetX - contactSize - margin * 1.5,
+        y: contactOffsetY + contactSize + margin,
+        width: contactSize + margin * 2.5,
+        height: contactSize + margin * 2
       }
     ];
     

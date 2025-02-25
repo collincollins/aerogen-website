@@ -17,8 +17,5 @@
     <button class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all">
       Our Services
     </button>
-    <button class="px-6 py-3 bg-white/50 text-primary border border-primary/20 rounded-lg hover:bg-white/70 transition-all">
-      Contact Us
-    </button>
   </div>
 </div>

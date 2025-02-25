@@ -8,13 +8,13 @@
   import { currentSection, activeNavSections } from './stores/navigation';
   
   let logoCloudComponent: Cloud3D;
-  let aboutCloudComponent: Cloud3DReverse;
+  let contactCloudComponent: Cloud3DReverse;
   let isLogoClicking = false;
-  let isAboutClicking = false;
+  let isContactClicking = false;
   let logoContainerSize = "";
   let logoContainerPosition = "";
-  let aboutContainerSize = "";
-  let aboutContainerPosition = "";
+  let contactContainerSize = "";
+  let contactContainerPosition = "";
   let questionMarkSize = "";
   
   const updateSize = (matches: boolean) => {
@@ -22,9 +22,9 @@
     logoContainerSize = matches ? "w-[10rem] h-[10rem]" : "w-[6rem] h-[6rem]";
     logoContainerPosition = matches ? "top-[-2rem] left-[0rem]" : "top-[-1.5rem] left-[-0rem]";
     
-    // About cloud sizing (slightly smaller than logo)
-    aboutContainerSize = matches ? "w-[8rem] h-[8rem]" : "w-[5rem] h-[5rem]";
-    aboutContainerPosition = matches ? "top-[-1rem] right-[2rem]" : "top-[-1rem] right-[1rem]";
+    // Contact cloud sizing (slightly smaller than logo)`
+    contactContainerSize = matches ? "w-[10rem] h-[10rem]" : "w-[6rem] h-[6rem]";
+    contactContainerPosition = matches ? "top-[-1rem] right-[2rem]" : "top-[-1rem] right-[0rem]";
     
     // Question mark sizing
     questionMarkSize = matches ? "text-3xl mt-3" : "text-xl mt-3";
@@ -64,18 +64,18 @@
     });
   };
 
-  const handleAboutClick = () => {
+  const handleContactClick = () => {
     // Set clicking state immediately for visual feedback
-    isAboutClicking = true;
+    isContactClicking = true;
     
     // Change the page immediately
-    currentSection.set('about');
+    currentSection.set('contact');
     
     // Start cloud spin immediately
-    aboutCloudComponent.spin().then(() => {
+    contactCloudComponent.spin().then(() => {
       // Reset after animation completes
       setTimeout(() => {
-        isAboutClicking = false;
+        isContactClicking = false;
       }, 50);
     });
   };
@@ -111,17 +111,17 @@
       </div>
     </div>
     
-    <!-- Right side - About cloud container -->
-    <div class="absolute {aboutContainerPosition} {aboutContainerSize} 
+    <!-- Right side - Contact cloud container -->
+    <div class="absolute {contactContainerPosition} {contactContainerSize} 
                 transition-all duration-300 ease-in-out">
-      <Cloud3DReverse bind:this={aboutCloudComponent} />
+      <Cloud3DReverse bind:this={contactCloudComponent} />
       <div class="absolute inset-0 flex flex-col items-center justify-center">
         <button 
           class="relative border-0 p-0 {questionMarkSize} text-primary font-aileron font-bold active:scale-90 transition-transform duration-50"
-          class:opacity-90={$currentSection !== 'about'}
-          class:scale-90={isAboutClicking}
-          on:click={handleAboutClick}
-          aria-label="About section"
+          class:opacity-90={$currentSection !== 'contact'}
+          class:scale-90={isContactClicking}
+          on:click={handleContactClick}
+          aria-label="Contact section"
         >
           ?
         </button>
