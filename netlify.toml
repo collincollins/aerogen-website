@@ -9,5 +9,3 @@
   framework = "sveltekit"
   targetPort = 5173
   port = 8888
-  
-/*    /index.html   200
