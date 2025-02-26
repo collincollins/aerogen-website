@@ -55,9 +55,19 @@ function getOSInfo(ua: string) {
 
 // Initialize analytics and create user document
 export async function initAnalytics() {
-  if (!browser || isDev) return;
+  if (!browser) {
+    console.log('Analytics: Not initializing - not in browser environment');
+    return;
+  }
+  
+  if (isDev) {
+    console.log('Analytics: Not initializing - in development mode');
+    return;
+  }
 
   try {
+    console.log('Analytics: Initializing...');
+    
     // Get current page path
     const entryPage = window.location.pathname;
     
@@ -74,6 +84,8 @@ export async function initAnalytics() {
       ...deviceInfo
     };
     
+    console.log('Analytics: Sending initial payload', payload);
+    
     // Send to Netlify function
     const response = await fetch('/.netlify/functions/constructUserDocument', {
       method: 'POST',
@@ -84,10 +96,13 @@ export async function initAnalytics() {
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Analytics: Server responded with error', response.status, errorText);
       throw new Error(`Error initializing analytics: ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log('Analytics: Received response', data);
     
     // Store session data for future updates
     sessionData.set({
@@ -105,6 +120,8 @@ export async function initAnalytics() {
     
     // Set up fun_mode tracking
     trackFunMode();
+    
+    console.log('Analytics: Initialization complete');
     
   } catch (error) {
     console.error('Failed to initialize analytics:', error);
@@ -185,13 +202,18 @@ export async function updateSession(sessionUpdates: any) {
       ...sessionUpdates
     };
     
-    await fetch('/.netlify/functions/updateUserDocument', {
+    const response = await fetch('/.netlify/functions/updateUserDocument', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Analytics: Error updating session', response.status, errorText);
+    }
   } catch (error) {
     console.error('Failed to update session:', error);
   }
@@ -216,13 +238,20 @@ export async function flushEvents() {
       events
     };
     
-    await fetch('/.netlify/functions/updateUserDocument', {
+    const response = await fetch('/.netlify/functions/updateUserDocument', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Analytics: Error flushing events', response.status, errorText);
+      // Put events back in buffer if send fails
+      eventBuffer.update(buffer => [...buffer, ...events]);
+    }
   } catch (error) {
     console.error('Failed to flush events:', error);
     
