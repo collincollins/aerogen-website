@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "description": "Netlify functions for Aerogen website",
   "dependencies": {
-    "mongodb": "^6.3.0"
+    "mongodb": "^5.9.0"
   }
 } 

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MongoDB Connection Test</title>
+  <style>
+    body {
+      font-family: 'Aileron', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: rgb(29, 73, 167);
+    }
+    button {
+      background-color: rgb(29, 73, 167);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    button:hover {
+      background-color: rgb(95, 179, 249);
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .result {
+      margin-top: 20px;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>MongoDB Connection Test</h1>
+  <p>This page tests the connection to MongoDB through Netlify Functions.</p>
+  
+  <button id="testConnection">Test MongoDB Connection</button>
+  <button id="testConstructUser">Test constructUserDocument</button>
+  
+  <div class="result">
+    <h2>Result:</h2>
+    <pre id="resultOutput">Click a button to run a test...</pre>
+  </div>
+  
+  <script>
+    document.getElementById('testConnection').addEventListener('click', async () => {
+      const resultOutput = document.getElementById('resultOutput');
+      resultOutput.textContent = 'Testing connection...';
+      resultOutput.className = '';
+      
+      try {
+        const response = await fetch('/.netlify/functions/test-mongodb');
+        const data = await response.json();
+        
+        resultOutput.textContent = JSON.stringify(data, null, 2);
+        resultOutput.className = response.ok ? 'success' : 'error';
+      } catch (error) {
+        resultOutput.textContent = `Error: ${error.message}`;
+        resultOutput.className = 'error';
+      }
+    });
+    
+    document.getElementById('testConstructUser').addEventListener('click', async () => {
+      const resultOutput = document.getElementById('resultOutput');
+      resultOutput.textContent = 'Testing constructUserDocument...';
+      resultOutput.className = '';
+      
+      try {
+        // Create a simple payload
+        const payload = {
+          entryPage: '/test-mongodb.html',
+          referrer: 'direct',
+          browser: 'Test Browser',
+          os: 'Test OS',
+          screenSize: '1920x1080',
+          mobile: false
+        };
+        
+        const response = await fetch('/.netlify/functions/constructUserDocument', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        resultOutput.textContent = JSON.stringify(data, null, 2);
+        resultOutput.className = response.ok ? 'success' : 'error';
+      } catch (error) {
+        resultOutput.textContent = `Error: ${error.message}`;
+        resultOutput.className = 'error';
+      }
+    });
+  </script>
+</body>
+</html> 
