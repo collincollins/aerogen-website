@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fun_mode } from './stores/navigation';
+  import { trackClick } from './utils/analytics';
   
   // social media links excluding instagram
   const socialLinks = [
@@ -22,8 +23,14 @@
   ];
   
   // Toggle fun_mode
-  const toggleFunMode = () => {
+  const handleToggleFunMode = (event: MouseEvent | KeyboardEvent) => {
+    trackClick(event as MouseEvent, 'fun_mode_toggle');
     fun_mode.update(value => !value);
+  };
+  
+  // Handle social link click
+  const handleSocialClick = (event: MouseEvent, linkName: string) => {
+    trackClick(event, `social_${linkName.toLowerCase()}`);
   };
   
   // Subscribe to fun_mode to get current value
@@ -45,8 +52,8 @@
         <div class="relative mb-4">
           <!-- Fun Mode Toggle on the right -->
           <button 
-            on:click={toggleFunMode}
-            on:keydown={(e) => e.key === 'Enter' && toggleFunMode()}
+            on:click={handleToggleFunMode}
+            on:keydown={(e) => e.key === 'Enter' && handleToggleFunMode(e)}
             tabindex="0"
             aria-label={funModeEnabled ? "Disable visual effects" : "Enable visual effects"}
             class="absolute right-0 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-white/10 transition-colors flex items-center"
@@ -65,6 +72,7 @@
                 aria-label={link.name} 
                 rel="noopener noreferrer"
                 class="hover:opacity-80 transition-opacity flex items-center justify-center"
+                on:click={(e) => handleSocialClick(e, link.name)}
               >
                 {@html link.svg}
               </a>
