@@ -190,12 +190,12 @@
           <GlassCard width="w-full max-w-2xl">
             <div class="flex flex-col items-center text-center">
               <p class="text-primary-dark text-xl leading-relaxed mb-6 font-aileron font-light">
-                Aviation consulting with decades of operational expertise
+                Proven Airline Expertise for Your Success
               </p>
               <hr class="w-24 border-primary/90 mb-6" />
               <p class="text-primary-dark leading-relaxed font-aileron font-light">
-                From airline operations to strategic growth, we bring executive-level experience 
-                from leading airlines to help your aviation business reach new heights.
+                With years of frontline airline experience, we provide the strategic vision and operational edge your aviation enterprise needs to thrive.
+                 From agile micro-consulting sessions to embedded fractional leadership, we scale our expertise to fit your goals.
               </p>
             </div>
           </GlassCard>
@@ -212,14 +212,18 @@
                 <p class="text-lg italic text-primary-dark font-aileron mb-4 mt-[-2px] text-left font-light">John E. Greif IV</p>
                 
                 <p class="text-primary-dark leading-relaxed mb-0 font-aileron font-light">
-                  I’ve lived aviation since day one. My dad founded Tropic Air in Belize in 1979, and I grew up immersed in the world of flight and business, learning the craft from the ground up.
+                  I’ve lived aviation since day one. My dad founded Tropic Air in Belize in 1979,
+                   and I grew up immersed in the world of flight and business, learning the craft from the ground up.
 
                 </p>
               </div>
             </div>
             
             <p class="text-primary-dark leading-relaxed mb-5 mt-0 font-aileron font-light">
-              That spark led me to the U.S. Air Force, where I sharpened my skills on C-17 jets, followed by a 15+ year career leading operations at Tropic Air and Southern Airways Express, delivering expansions, cost savings, and high-performing teams. Now, I’m bringing that experience to Aerogen, Inc.
+              That spark led me to the U.S. Air Force, where I sharpened my skills on C-17 jets,
+               followed by a 15+ year career leading operations at Tropic Air and Southern Airways Express,
+                delivering expansions, cost savings, and high-performing teams. Now, I’m bringing that experience
+                 to Aerogen, Inc.
             </p>
             
             <p class="text-primary-dark leading-relaxed font-aileron font-light">
