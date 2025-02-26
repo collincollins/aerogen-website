@@ -5,10 +5,36 @@ const { MongoClient } = require('mongodb');
 const crypto = require('crypto');
 
 // MongoDB connection
-const uri = process.env.MONGODB_URI;
+let uri = process.env.MONGODB_URI;
 const dbName = 'aerogen-analytics';
 const usersCollection = 'users';
 const sessionsCollection = 'sessions';
+
+// Fix connection string if needed
+function fixConnectionString(connectionString) {
+  if (!connectionString) return null;
+  
+  // Log the raw connection string (without credentials)
+  console.log('Raw connection string received:', 
+    connectionString.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
+  
+  // Check if the connection string is properly formatted
+  if (!connectionString.startsWith('mongodb://') && !connectionString.startsWith('mongodb+srv://')) {
+    console.log('Connection string does not start with mongodb:// or mongodb+srv://');
+    
+    // Try to fix common issues with connection strings
+    if (connectionString.includes('mongodb+srv://')) {
+      // Extract the part after mongodb+srv://
+      const parts = connectionString.split('mongodb+srv://');
+      if (parts.length > 1) {
+        connectionString = 'mongodb+srv://' + parts[1];
+        console.log('Fixed connection string format');
+      }
+    }
+  }
+  
+  return connectionString;
+}
 
 // Hash IP address for anonymous user identification
 function hashIPAddress(ipAddress, salt) {
@@ -39,14 +65,29 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Check for MongoDB URI
+  // Check for MongoDB URI and fix if needed
+  uri = fixConnectionString(uri);
+  
   if (!uri) {
-    console.error('MONGODB_URI environment variable is not set');
+    console.error('MONGODB_URI environment variable is not set or invalid');
     return {
       statusCode: 500,
       body: JSON.stringify({ 
         status: 'error',
-        message: 'Server configuration error: Missing database connection string'
+        message: 'Server configuration error: Missing or invalid database connection string'
+      })
+    };
+  }
+  
+  // Validate connection string format
+  const isValidFormat = uri.startsWith('mongodb+srv://') || uri.startsWith('mongodb://');
+  if (!isValidFormat) {
+    console.error('Invalid MongoDB connection string format');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        status: 'error',
+        message: 'Invalid MongoDB connection string format'
       })
     };
   }
